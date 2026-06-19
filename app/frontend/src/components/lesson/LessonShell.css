@@ -1,0 +1,60 @@
+.lesson-shell {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.lesson-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.lesson-header {
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--bg-surface);
+}
+
+.lesson-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.lesson-module-label {
+  color: var(--text-muted);
+}
+
+.lesson-breadcrumb-sep {
+  color: var(--text-dim);
+}
+
+.lesson-step-label {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.lesson-content-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.lesson-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  gap: 12px;
+}
+
+.lesson-empty-icon {
+  font-size: 48px;
+}

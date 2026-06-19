@@ -1,0 +1,66 @@
+.step-nav {
+  padding: 12px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.step-nav-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.step-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  padding: 0;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.step-dot:hover {
+  border-color: var(--accent);
+  transform: scale(1.3);
+}
+
+.step-dot.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: scale(1.2);
+}
+
+.step-dot.done {
+  background: var(--success);
+  border-color: var(--success);
+}
+
+.step-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.step-complete-btn {
+  background: var(--bg-elevated);
+  border-color: var(--border);
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.step-complete-btn.done {
+  background: rgba(63, 185, 80, 0.15);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.step-complete-btn:not(.done):hover {
+  border-color: var(--success);
+  color: var(--success);
+}

@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+dist/
+
+# Logs
+*.log
+/tmp/
+
+# Environment / secrets
+.env
+.env.local
+*.githubActionsCAP-settings.json
+
+# Build artifacts
+app/backend/gen/
+app/frontend/dist/
+mta_archives/
+*.mtar
+
+# Test / debug files
+.playwright-mcp/
+test-*.mjs
+test-*.cjs
+test-minimal-server.mjs
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp
