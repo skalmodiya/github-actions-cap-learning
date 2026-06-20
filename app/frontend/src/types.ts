@@ -35,6 +35,10 @@ export interface AppSettings {
   baseUrl: string
   apiKey: string
   model: string
+  // GitHub integration
+  githubToken: string
+  githubOwner: string
+  githubRepo: string
 }
 
 export interface TerminalLine {

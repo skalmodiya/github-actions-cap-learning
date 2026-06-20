@@ -17,16 +17,37 @@ interface SettingsPageProps {
 
 export default function SettingsPage({ onClose }: SettingsPageProps) {
   const { settings, saveSettings } = useSettings()
-  const [form, setForm] = useState<AppSettings>(settings)
+  const [form, setForm] = useState<AppSettings>({
+    githubToken: '',
+    githubOwner: '',
+    githubRepo: 'github-actions-cap-learning',
+    ...settings,
+  })
   const [models, setModels] = useState<string[]>([])
   const [fetchingModels, setFetchingModels] = useState(false)
   const [modelError, setModelError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null)
+  const [ghTestResult, setGhTestResult] = useState<{ ok: boolean; message: string } | null>(null)
+  const [ghTesting, setGhTesting] = useState(false)
 
   const update = (key: keyof AppSettings, value: string) =>
     setForm(prev => ({ ...prev, [key]: value }))
+
+  async function testGitHub() {
+    setGhTesting(true)
+    setGhTestResult(null)
+    try {
+      await saveSettings({ ...form })
+      const result = await api.testGitHubConnection(form.githubOwner, form.githubRepo)
+      setGhTestResult({ ok: true, message: `Connected to ${result.repo} — ${result.totalRuns} workflow runs` })
+    } catch (err: unknown) {
+      setGhTestResult({ ok: false, message: err instanceof Error ? err.message : String(err) })
+    } finally {
+      setGhTesting(false)
+    }
+  }
 
   async function fetchModels() {
     setFetchingModels(true)
@@ -210,6 +231,60 @@ export default function SettingsPage({ onClose }: SettingsPageProps) {
               </tbody>
             </table>
           </div>
+        </section>
+
+        {/* GitHub Integration Section */}
+        <section className="settings-section">
+          <h2 className="settings-section-title">🐙 GitHub Integration</h2>
+          <p className="settings-section-desc">
+            Connect to your GitHub repository to see live Actions run status in the sidebar.
+            Create a PAT at <strong>GitHub → Settings → Developer settings → Personal access tokens</strong> with <code>repo</code> and <code>workflow</code> scopes.
+          </p>
+
+          <div className="settings-grid">
+            <div className="settings-field">
+              <label htmlFor="ghToken">Personal Access Token (PAT)</label>
+              <input
+                id="ghToken"
+                type="password"
+                value={form.githubToken ?? ''}
+                onChange={e => update('githubToken', e.target.value)}
+                placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+              />
+            </div>
+            <div className="settings-field">
+              <label htmlFor="ghOwner">Repository Owner</label>
+              <input
+                id="ghOwner"
+                type="text"
+                value={form.githubOwner ?? ''}
+                onChange={e => update('githubOwner', e.target.value)}
+                placeholder="your-github-username"
+              />
+            </div>
+            <div className="settings-field">
+              <label htmlFor="ghRepo">Repository Name</label>
+              <input
+                id="ghRepo"
+                type="text"
+                value={form.githubRepo ?? ''}
+                onChange={e => update('githubRepo', e.target.value)}
+                placeholder="github-actions-cap-learning"
+              />
+            </div>
+          </div>
+
+          <div className="settings-actions">
+            <button onClick={testGitHub} disabled={ghTesting || !form.githubToken || !form.githubOwner || !form.githubRepo}>
+              {ghTesting ? 'Testing…' : '🔌 Test Connection'}
+            </button>
+          </div>
+
+          {ghTestResult && (
+            <div className={`test-result ${ghTestResult.ok ? 'ok' : 'err'}`}>
+              {ghTestResult.ok ? '✓' : '✗'} {ghTestResult.message}
+            </div>
+          )}
         </section>
 
         {/* About Section */}

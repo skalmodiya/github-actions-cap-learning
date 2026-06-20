@@ -1,7 +1,15 @@
 import { useAppState } from '../../context/AppStateContext'
+import FileExplorer from './FileExplorer'
+import GHAStatusPanel from '../github/GHAStatusPanel'
 import './Sidebar.css'
 
-export default function Sidebar() {
+interface SidebarProps {
+  onOpenFile: (path: string) => void
+  activeExplorerFile: string | null
+  explorerRefresh: number
+}
+
+export default function Sidebar({ onOpenFile, activeExplorerFile, explorerRefresh }: SidebarProps) {
   const { state, dispatch, activeModule } = useAppState()
 
   return (
@@ -74,6 +82,16 @@ export default function Sidebar() {
           </span>
         </div>
       )}
+
+      {/* GitHub Actions live status */}
+      <GHAStatusPanel />
+
+      {/* File Explorer — project files tree */}
+      <FileExplorer
+        onOpenFile={onOpenFile}
+        activeFilePath={activeExplorerFile}
+        refreshKey={explorerRefresh}
+      />
     </aside>
   )
 }

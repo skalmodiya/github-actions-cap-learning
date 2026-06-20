@@ -7,6 +7,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   baseUrl: 'http://localhost:6655',
   apiKey: '',
   model: 'anthropic--claude-4.5-sonnet',
+  githubToken: '',
+  githubOwner: '',
+  githubRepo: 'github-actions-cap-learning',
 }
 
 interface SettingsContextValue {

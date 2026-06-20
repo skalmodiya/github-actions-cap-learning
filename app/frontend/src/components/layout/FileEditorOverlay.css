@@ -1,0 +1,69 @@
+.file-editor-overlay {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border);
+}
+
+.file-editor-overlay-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elevated);
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.file-editor-overlay-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.file-editor-overlay-icon { font-size: 13px; flex-shrink: 0; }
+
+.file-editor-overlay-path {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-editor-overlay-dirty {
+  color: var(--warning);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.file-editor-overlay-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.file-editor-save-msg { font-size: 12px; color: var(--success); }
+.file-editor-error { font-size: 12px; color: var(--error); max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+
+.file-editor-overlay-body {
+  flex: 1;
+  overflow: hidden;
+  background: #1e1e1e;
+}
+
+.file-editor-overlay-loading {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}

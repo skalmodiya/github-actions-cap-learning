@@ -6,10 +6,11 @@ import { filesRouter } from './routes/files.js'
 import { settingsRouter } from './routes/settings.js'
 import { progressRouter } from './routes/progress.js'
 import { llmRouter } from './routes/llm.js'
+import { githubRouter } from './routes/github.js'
 import { WORK_DIR, SHELL_EXE } from './lib/paths.js'
 
 const app = express()
-const PORT = process.env.PORT || 19240
+const PORT = process.env.PORT || 19260
 
 app.use(cors())
 app.use(express.json({ limit: '4mb' }))
@@ -19,6 +20,7 @@ app.use('/api', filesRouter)
 app.use('/api/settings', settingsRouter)
 app.use('/api/progress', progressRouter)
 app.use('/api/llm', llmRouter)
+app.use('/api/github', githubRouter)
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, cwd: WORK_DIR, shell: SHELL_EXE })

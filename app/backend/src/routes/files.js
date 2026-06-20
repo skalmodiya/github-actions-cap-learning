@@ -1,13 +1,14 @@
 import { Router } from 'express'
-import { readFile, writeFile, mkdir, readdir } from 'fs/promises'
+import { readFile, writeFile, mkdir, readdir, stat } from 'fs/promises'
 import { watch } from 'fs'
-import { resolve, extname, dirname } from 'path'
+import { resolve, extname, dirname, join, relative } from 'path'
 import { WORK_DIR } from '../lib/paths.js'
 
 export const filesRouter = Router()
 
 function safePath(p) {
-  if (!p) throw new Error('path required')
+  // Empty path → WORK_DIR root
+  if (!p || p === '' || p === '.') return resolve(WORK_DIR)
   const normalised = p.replace(/\//g, '\\')
   const resolved = resolve(WORK_DIR, normalised.replace(/^[\\/]/, ''))
   const workDirNorm = resolve(WORK_DIR)
@@ -93,19 +94,58 @@ filesRouter.get('/watch', (req, res) => {
 filesRouter.get('/ls', async (req, res) => {
   try {
     const fullPath = safePath(req.query.path || '')
-    const entries = await readdir(fullPath, { withFileTypes: true })
-    const items = entries
-      .filter(e => !e.name.startsWith('.') || e.name === '.github')
-      .map(e => ({
-        name: e.name,
-        type: e.isDirectory() ? 'dir' : 'file',
-        ext: e.isFile() ? extname(e.name) : null,
-      }))
-      .sort((a, b) => {
+    const recursive = req.query.recursive === 'true'
+    const maxDepth = Math.min(parseInt(req.query.depth || '4', 10), 6)
+
+    if (!recursive) {
+      const entries = await readdir(fullPath, { withFileTypes: true })
+      const items = entries
+        .filter(e => !e.name.startsWith('.') || e.name === '.github')
+        .map(e => ({
+          name: e.name,
+          path: (req.query.path ? req.query.path + '/' : '') + e.name,
+          type: e.isDirectory() ? 'dir' : 'file',
+          ext: e.isFile() ? extname(e.name) : null,
+        }))
+        .sort((a, b) => {
+          if (a.type !== b.type) return a.type === 'dir' ? -1 : 1
+          return a.name.localeCompare(b.name)
+        })
+      return res.json({ items })
+    }
+
+    // Recursive tree mode
+    const SKIP_DIRS = new Set(['node_modules', '.git', 'gen', 'mta_archives', '.vscode', 'dist', 'app', 'test-dir'])
+
+    async function buildTree(dirPath, relBase, depth) {
+      if (depth > maxDepth) return []
+      let entries
+      try { entries = await readdir(dirPath, { withFileTypes: true }) }
+      catch { return [] }
+
+      const items = []
+      for (const e of entries) {
+        if (e.name.startsWith('.') && e.name !== '.github' && e.name !== '.gitignore' && e.name !== '.cdsrc.json') continue
+        if (e.isDirectory() && SKIP_DIRS.has(e.name)) continue
+        const relPath = relBase ? relBase + '/' + e.name : e.name
+        if (e.isDirectory()) {
+          const children = await buildTree(join(dirPath, e.name), relPath, depth + 1)
+          items.push({ name: e.name, path: relPath, type: 'dir', ext: null, children })
+        } else {
+          items.push({ name: e.name, path: relPath, type: 'file', ext: extname(e.name), children: [] })
+        }
+      }
+      // dirs first, then alpha
+      items.sort((a, b) => {
         if (a.type !== b.type) return a.type === 'dir' ? -1 : 1
         return a.name.localeCompare(b.name)
       })
-    res.json({ items })
+      return items
+    }
+
+    const basePath = req.query.path || ''
+    const tree = await buildTree(fullPath, basePath, 0)
+    res.json({ items: tree })
   } catch (err) {
     res.status(404).json({ error: err.message })
   }
