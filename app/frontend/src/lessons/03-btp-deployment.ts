@@ -259,51 +259,62 @@ This \`.mtar\` file is everything CF needs to deploy your entire application sta
     {
       id: '03-btp-step-5',
       title: 'Login to Cloud Foundry',
-      contextHints: ['cf login', 'API endpoint', 'org', 'space', 'cf target', 'SSO', 'cf apps'],
-      completionCriteria: 'Successfully log in to your BTP CF environment',
+      contextHints: ['cf login', 'API endpoint', 'org', 'space', 'cf target', 'SSO', 'cf apps', 'token expired'],
+      completionCriteria: 'Run cf target and see your org and space',
       blocks: [
         {
           kind: 'markdown',
           content: `## Login to Cloud Foundry
 
-Before deploying, you need to authenticate with your BTP CF environment.
+> **Token expired?** If you see _"The token expired, was revoked, or the token ID is incorrect"_, just re-run the login command below — your session expired and you need to re-authenticate.
 
-### Finding Your API Endpoint
-
-1. Go to [BTP Cockpit](https://cockpit.btp.cloud.sap)
-2. Select your **Subaccount**
-3. Click **Cloud Foundry** → **Spaces**
-4. The API URL is shown at the top (e.g. \`https://api.cf.eu10.hana.ondemand.com\`)
-
-### Common CF API Endpoints by Region
-
-| Region | API Endpoint |
-|---|---|
-| EU10 (Frankfurt) | \`https://api.cf.eu10.hana.ondemand.com\` |
-| US10 (East US) | \`https://api.cf.us10.hana.ondemand.com\` |
-| AP10 (Australia) | \`https://api.cf.ap10.hana.ondemand.com\` |
-
-### Login
-
-Replace the values below with your actual BTP credentials:`,
+### Step 1 — Check if you're already logged in`,
         },
         {
           kind: 'run',
-          label: 'Login to Cloud Foundry',
-          command: 'cf login -a https://api.cf.eu10.hana.ondemand.com --sso',
+          label: 'Check current CF session',
+          command: 'cf target',
         },
         {
           kind: 'markdown',
-          content: `The \`--sso\` flag opens a browser for SSO login (recommended for human logins).
-For automated CI/CD (GitHub Actions), use username/password instead:
+          content: `### Step 2 — Login (or re-login)
 
+**Click ✏ to edit the command** — replace the API URL with your region's endpoint before running.
+
+#### Common CF API Endpoints by Region
+
+| Region | API Endpoint |
+|---|---|
+| **US10** (East US) | \`https://api.cf.us10.hana.ondemand.com\` |
+| EU10 (Frankfurt) | \`https://api.cf.eu10.hana.ondemand.com\` |
+| AP10 (Australia) | \`https://api.cf.ap10.hana.ondemand.com\` |
+| EU20 (Netherlands) | \`https://api.cf.eu20.hana.ondemand.com\` |
+| US20 (West US) | \`https://api.cf.us20.hana.ondemand.com\` |
+
+> **Tip:** Find your exact API URL in **BTP Cockpit** → Subaccount → Cloud Foundry → API Endpoint`,
+        },
+        {
+          kind: 'run',
+          label: 'Login to Cloud Foundry (SSO)',
+          command: 'cf login -a https://api.cf.us10.hana.ondemand.com --sso',
+        },
+        {
+          kind: 'markdown',
+          content: `The \`--sso\` flag opens a one-time passcode URL in your terminal — paste it in a browser, authenticate, then paste the code back.
+
+For **non-SSO** login (username + password):
 \`\`\`bash
-cf login -a $CF_API -u $CF_USERNAME -p $CF_PASSWORD -o $CF_ORG -s $CF_SPACE
+cf login -a https://api.cf.us10.hana.ondemand.com -u your@email.com -p yourpassword
+\`\`\`
+
+For **automated CI/CD** (GitHub Actions), use secrets — never hardcode credentials:
+\`\`\`bash
+cf login -a \$CF_API -u \$CF_USERNAME -p \$CF_PASSWORD -o \$CF_ORG -s \$CF_SPACE
 \`\`\``,
         },
         {
           kind: 'run',
-          label: 'Check current CF target',
+          label: 'Verify login — show target org & space',
           command: 'cf target',
         },
         {
@@ -350,7 +361,7 @@ on:
         options: [ dev, prod ]
 
 env:
-  CF_API: https://api.cf.eu10.hana.ondemand.com
+  CF_API: https://api.cf.us10.hana.ondemand.com  # ✏ change to your region's endpoint
   CF_ORG: \${{ secrets.CF_ORG }}
 
 jobs:
