@@ -41,7 +41,10 @@ export function useLLMChat(): UseLLMChatResult {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: updatedHistory.map(m => ({ role: m.role, content: m.content })),
+          // Filter out any messages with empty content — these cause API errors
+          messages: updatedHistory
+            .map(m => ({ role: m.role, content: m.content }))
+            .filter(m => m.content.trim() !== ''),
           systemPrompt,
           projectDir: projectDir || null,
         }),

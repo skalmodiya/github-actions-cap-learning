@@ -99,7 +99,11 @@ llmRouter.get('/models', async (req, res) => {
 llmRouter.post('/chat', async (req, res) => {
   const settings = await loadSettings()
   const { provider, baseUrl, apiKey, model } = settings
-  const { messages, systemPrompt, projectDir } = req.body
+  const { messages: rawMessages, systemPrompt, projectDir } = req.body
+
+  // Sanitize: remove any messages with empty/whitespace-only content
+  // These cause API errors (e.g. Anthropic: "all messages must have non-empty content")
+  const messages = (rawMessages || []).filter(m => m.content && m.content.trim() !== '')
 
   const authHeader = { 'Authorization': `Bearer ${apiKey || 'no-key'}` }
 

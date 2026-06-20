@@ -10,7 +10,7 @@ import { githubRouter } from './routes/github.js'
 import { WORK_DIR, SHELL_EXE } from './lib/paths.js'
 
 const app = express()
-const PORT = process.env.PORT || 19300
+const PORT = process.env.PORT || 19310
 
 app.use(cors())
 app.use(express.json({ limit: '4mb' }))
