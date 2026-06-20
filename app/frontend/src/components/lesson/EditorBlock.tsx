@@ -32,6 +32,7 @@ export default function EditorBlock({ block, projectDir }: EditorBlockProps) {
   const { dispatch } = useAppState()
   const [content, setContent] = useState<string>('')
   const [savedContent, setSavedContent] = useState<string>('')
+  const [fileExists, setFileExists] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -48,13 +49,15 @@ export default function EditorBlock({ block, projectDir }: EditorBlockProps) {
       .then(r => {
         setContent(r.content)
         setSavedContent(r.content)
+        setFileExists(true)
         dispatch({ type: 'SET_OPEN_FILE', path: resolvedPath, content: r.content })
       })
       .catch(() => {
-        // File doesn't exist yet — start with default content or empty
+        // File doesn't exist yet — load default content; treat as unsaved
         const initial = block.defaultContent ?? ''
         setContent(initial)
         setSavedContent(initial)
+        setFileExists(false)
         dispatch({ type: 'SET_OPEN_FILE', path: resolvedPath, content: initial })
       })
       .finally(() => setLoading(false))
@@ -64,7 +67,8 @@ export default function EditorBlock({ block, projectDir }: EditorBlockProps) {
     }
   }, [resolvedPath, block.defaultContent])
 
-  const isDirty = content !== savedContent
+  // Dirty when content differs from disk, OR when file hasn't been saved yet
+  const isDirty = !fileExists || content !== savedContent
 
   async function handleSave() {
     setSaving(true)
@@ -72,6 +76,7 @@ export default function EditorBlock({ block, projectDir }: EditorBlockProps) {
     try {
       await api.writeFile(resolvedPath, content)
       setSavedContent(content)
+      setFileExists(true)
       setSaveMsg('Saved!')
       dispatch({ type: 'SET_OPEN_FILE', path: resolvedPath, content })
       setTimeout(() => setSaveMsg(null), 2000)
@@ -88,7 +93,8 @@ export default function EditorBlock({ block, projectDir }: EditorBlockProps) {
         <div className="editor-file-info">
           <span className="editor-icon">📄</span>
           <span className="editor-path">{resolvedPath}</span>
-          {isDirty && <span className="editor-dirty">●</span>}
+          {!fileExists && <span className="editor-new-badge">new</span>}
+          {fileExists && isDirty && <span className="editor-dirty">●</span>}
         </div>
         {block.description && (
           <span className="editor-desc">{block.description}</span>

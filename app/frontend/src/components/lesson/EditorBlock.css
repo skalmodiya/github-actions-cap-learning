@@ -44,6 +44,19 @@
   flex-shrink: 0;
 }
 
+.editor-new-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--success);
+  background: rgba(63, 185, 80, 0.12);
+  border: 1px solid rgba(63, 185, 80, 0.35);
+  border-radius: 4px;
+  padding: 1px 6px;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
 .editor-desc {
   font-size: 11px;
   color: var(--text-muted);
