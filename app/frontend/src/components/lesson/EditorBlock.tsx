@@ -93,6 +93,28 @@ export default function EditorBlock({ block, projectDir }: EditorBlockProps) {
     return () => es.close()
   }, [resolvedPath, fileExists])
 
+  // Listen for AI-written files and reload without conflict prompt
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail
+      const writtenPath = detail.projectDir
+        ? `${detail.projectDir}/${detail.path}`
+        : detail.path
+      if (writtenPath === resolvedPath || detail.path === resolvedPath) {
+        userEditedRef.current = false
+        setExternalReload(false)
+        api.readFile(resolvedPath).then(r => {
+          setContent(r.content)
+          setSavedContent(r.content)
+          setFileExists(true)
+          dispatch({ type: 'SET_OPEN_FILE', path: resolvedPath, content: r.content })
+        }).catch(() => {})
+      }
+    }
+    window.addEventListener('ai-file-written', handler)
+    return () => window.removeEventListener('ai-file-written', handler)
+  }, [resolvedPath])
+
   const isDirty = !fileExists || content !== savedContent
 
   // ── Save ────────────────────────────────────────────────────

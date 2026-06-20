@@ -3,13 +3,16 @@ import { useState, useCallback } from 'react'
 export interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
+  // Set when the AI wrote a file
+  fileWritten?: { path: string; explanation: string; projectDir: string | null }
+  fileWriteError?: { path: string; error: string }
 }
 
 interface UseLLMChatResult {
   messages: ChatMessage[]
   streaming: boolean
   error: string | null
-  send: (userMessage: string, systemPrompt?: string) => Promise<void>
+  send: (userMessage: string, systemPrompt?: string, projectDir?: string) => Promise<void>
   clear: () => void
 }
 
@@ -23,14 +26,14 @@ export function useLLMChat(): UseLLMChatResult {
     setError(null)
   }, [])
 
-  const send = useCallback(async (userMessage: string, systemPrompt?: string) => {
+  const send = useCallback(async (userMessage: string, systemPrompt?: string, projectDir?: string) => {
     setError(null)
     const userMsg: ChatMessage = { role: 'user', content: userMessage }
     const updatedHistory = [...messages, userMsg]
     setMessages(updatedHistory)
     setStreaming(true)
 
-    // Add empty assistant message that will be filled in
+    // Placeholder assistant message — filled in as tokens arrive
     setMessages(prev => [...prev, { role: 'assistant', content: '' }])
 
     try {
@@ -40,17 +43,17 @@ export function useLLMChat(): UseLLMChatResult {
         body: JSON.stringify({
           messages: updatedHistory.map(m => ({ role: m.role, content: m.content })),
           systemPrompt,
+          projectDir: projectDir || null,
         }),
       })
 
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`)
-      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
 
       const reader = res.body!.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
       let assistantText = ''
+      let fileWrittenData: ChatMessage['fileWritten'] | null = null
 
       while (true) {
         const { done, value } = await reader.read()
@@ -65,13 +68,47 @@ export function useLLMChat(): UseLLMChatResult {
           if (!line.startsWith('data: ')) continue
           try {
             const msg = JSON.parse(line.slice(6))
+
             if (msg.type === 'token') {
               assistantText += msg.data
               setMessages(prev => {
                 const copy = [...prev]
-                copy[copy.length - 1] = { role: 'assistant', content: assistantText }
+                copy[copy.length - 1] = {
+                  role: 'assistant',
+                  content: assistantText,
+                  fileWritten: fileWrittenData ?? undefined,
+                }
                 return copy
               })
+
+            } else if (msg.type === 'file_written') {
+              // File was written — store metadata on the assistant message
+              fileWrittenData = {
+                path: msg.data.path,
+                explanation: msg.data.explanation,
+                projectDir: msg.data.projectDir,
+              }
+              // Notify any open EditorBlock to reload via a custom event
+              window.dispatchEvent(new CustomEvent('ai-file-written', { detail: msg.data }))
+              setMessages(prev => {
+                const copy = [...prev]
+                copy[copy.length - 1] = {
+                  ...copy[copy.length - 1],
+                  fileWritten: fileWrittenData ?? undefined,
+                }
+                return copy
+              })
+
+            } else if (msg.type === 'file_write_error') {
+              setMessages(prev => {
+                const copy = [...prev]
+                copy[copy.length - 1] = {
+                  ...copy[copy.length - 1],
+                  fileWriteError: { path: msg.data.path, error: msg.data.error },
+                }
+                return copy
+              })
+
             } else if (msg.type === 'error') {
               setError(msg.data)
             }
@@ -80,7 +117,7 @@ export function useLLMChat(): UseLLMChatResult {
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err))
-      setMessages(prev => prev.slice(0, -1)) // remove empty assistant msg
+      setMessages(prev => prev.slice(0, -1))
     } finally {
       setStreaming(false)
     }
