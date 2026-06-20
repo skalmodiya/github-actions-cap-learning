@@ -74,13 +74,14 @@ function TreeNode({ node, depth, activeFilePath, onOpenFile }: TreeNodeProps) {
 }
 
 export default function FileExplorer({ onOpenFile, activeFilePath, refreshKey, fillHeight }: FileExplorerProps) {
-  const { activeProjectDir } = useAppState()
+  const { globalProjectDir } = useAppState()
   const [tree, setTree] = useState<DirEntry[]>([])
   const [loading, setLoading] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
 
-  // Use project dir as root when set, otherwise fall back to workspace root
-  const rootPath = activeProjectDir || ''
+  // FILES always uses the global project dir — the first one set across any module.
+  // This never changes when the user switches modules.
+  const rootPath = globalProjectDir || ''
 
   const reload = useCallback(() => {
     setLoading(true)
@@ -90,10 +91,8 @@ export default function FileExplorer({ onOpenFile, activeFilePath, refreshKey, f
       .finally(() => setLoading(false))
   }, [rootPath])
 
-  // Reload when root changes (project dir set/changed) or refresh triggered
+  // Reload when global project dir changes or refresh triggered
   useEffect(() => { reload() }, [reload, refreshKey])
-
-  const rootLabel = activeProjectDir ? activeProjectDir + '/' : 'workspace'
 
   return (
     <div className={`file-explorer ${collapsed ? 'collapsed' : ''} ${fillHeight ? 'fill-height' : ''}`}>
@@ -101,8 +100,8 @@ export default function FileExplorer({ onOpenFile, activeFilePath, refreshKey, f
         <span className="fe-header-icon">🗂</span>
         <span className="fe-header-title">
           Files
-          {activeProjectDir && (
-            <span className="fe-root-badge">📁 {activeProjectDir}</span>
+          {globalProjectDir && (
+            <span className="fe-root-badge">📁 {globalProjectDir}</span>
           )}
         </span>
         <div className="fe-header-actions" onClick={e => e.stopPropagation()}>
@@ -119,8 +118,8 @@ export default function FileExplorer({ onOpenFile, activeFilePath, refreshKey, f
             <div className="fe-empty">Loading…</div>
           ) : tree.length === 0 ? (
             <div className="fe-empty">
-              {activeProjectDir
-                ? `No files in ${activeProjectDir}/ yet.\nRun the lesson steps to create files.`
+              {globalProjectDir
+                ? `No files in ${globalProjectDir}/ yet.\nRun the lesson steps to create files.`
                 : 'Set a project folder in the lesson\n(Step 3 of CAP Project Setup).'}
             </div>
           ) : (

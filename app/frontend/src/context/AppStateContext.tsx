@@ -114,8 +114,11 @@ interface AppStateContextValue {
   dispatch: React.Dispatch<Action>
   activeModule: Module | undefined
   activeStep: Module['steps'][number] | undefined
-  // Resolved project directory for the active module (empty string = WORK_DIR root)
+  // Project dir for the ACTIVE module (used by run/editor blocks)
   activeProjectDir: string
+  // First project dir set across any module — used by FILES panel so it
+  // doesn't change when switching modules
+  globalProjectDir: string
 }
 
 const AppStateContext = createContext<AppStateContextValue | null>(null)
@@ -139,9 +142,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const activeModule = state.modules.find(m => m.id === state.activeModuleId)
   const activeStep = activeModule?.steps[state.activeStepIndex]
   const activeProjectDir = state.projectDirs[state.activeModuleId] ?? ''
+  // First non-empty project dir across all modules — stable for FILES panel
+  const globalProjectDir = Object.values(state.projectDirs).find(d => !!d) ?? ''
 
   return (
-    <AppStateContext.Provider value={{ state, dispatch, activeModule, activeStep, activeProjectDir }}>
+    <AppStateContext.Provider value={{ state, dispatch, activeModule, activeStep, activeProjectDir, globalProjectDir }}>
       {children}
     </AppStateContext.Provider>
   )
