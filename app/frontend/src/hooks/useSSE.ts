@@ -24,8 +24,8 @@ export function useSSE(): UseSSEResult {
     setElapsed(null)
   }, [])
 
-  // Strip ANSI escape codes
-  const stripAnsi = (s: string) => s.replace(/\x1b\[[0-9;]*[mGKH]/g, '')
+  // Strip any remaining ANSI codes that slip through (backend strips most)
+  const stripAnsi = (s: string) => s.replace(/\x1b\[[0-9;]*[A-Za-z]/g, '').replace(/\x1b[^[]/g, '')
 
   const run = useCallback(async (command: string, cwd?: string) => {
     if (abortRef.current) abortRef.current.abort()

@@ -48,8 +48,11 @@ export default function TerminalPanel({ layout, onLayoutChange }: TerminalPanelP
         setRunning(true); setExitCode(null); setElapsed(null); setCollapsed(false)
       }
       if (detail.lines?.length > 0) setAllLines(detail.lines)
-      if (!detail.running && detail.exitCode !== null) {
-        setRunning(false); setExitCode(detail.exitCode); setElapsed(detail.elapsed)
+      if (!detail.running) {
+        // Covers both clean exit (exitCode !== null) and abort/kill (exitCode === null)
+        setRunning(false)
+        setExitCode(detail.exitCode)
+        setElapsed(detail.elapsed)
       }
     }
     window.addEventListener('terminal-update', handler)
