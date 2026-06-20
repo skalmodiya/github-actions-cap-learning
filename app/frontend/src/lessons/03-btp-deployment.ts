@@ -277,9 +277,11 @@ This \`.mtar\` file is everything CF needs to deploy your entire application sta
         },
         {
           kind: 'markdown',
-          content: `### Step 2 — Login (or re-login)
+          content: `### Step 2 — Login
 
-**Click ✏ to edit the command** — replace the API URL with your region's endpoint before running.
+> ⚠ **The \`--sso\` flag requires interactive input** (paste a passcode) which doesn't work in this embedded terminal. Use one of the non-interactive methods below instead.
+
+**Click ✏ on the command below** to replace \`your@email.com\` and \`yourpassword\` with your SAP BTP credentials, and change the API URL to your region if needed.
 
 #### Common CF API Endpoints by Region
 
@@ -295,19 +297,21 @@ This \`.mtar\` file is everything CF needs to deploy your entire application sta
         },
         {
           kind: 'run',
-          label: 'Login to Cloud Foundry (SSO)',
-          command: 'cf login -a https://api.cf.us10.hana.ondemand.com --sso',
+          label: 'Login to Cloud Foundry',
+          command: 'cf login -a https://api.cf.us10.hana.ondemand.com -u your@email.com -p yourpassword',
         },
         {
           kind: 'markdown',
-          content: `The \`--sso\` flag opens a one-time passcode URL in your terminal — paste it in a browser, authenticate, then paste the code back.
+          content: `### SSO Login (outside this app)
 
-For **non-SSO** login (username + password):
+If you prefer SSO, run this **in your own terminal** (not here):
 \`\`\`bash
-cf login -a https://api.cf.us10.hana.ondemand.com -u your@email.com -p yourpassword
+cf login -a https://api.cf.us10.hana.ondemand.com --sso
 \`\`\`
+It will give you a URL — open it in a browser, get the passcode, paste it back.
 
-For **automated CI/CD** (GitHub Actions), use secrets — never hardcode credentials:
+### For CI/CD (GitHub Actions)
+Use secrets — never hardcode credentials in workflow files:
 \`\`\`bash
 cf login -a \$CF_API -u \$CF_USERNAME -p \$CF_PASSWORD -o \$CF_ORG -s \$CF_SPACE
 \`\`\``,
