@@ -33,6 +33,7 @@
   margin-top: 4px;
 }
 
+/* ── Panel shell ─────────────────────────────────────────── */
 .ai-chat-panel {
   width: 380px;
   flex-shrink: 0;
@@ -41,8 +42,10 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;       /* allow flex children to shrink/scroll properly */
 }
 
+/* ── Header ──────────────────────────────────────────────── */
 .ai-chat-header {
   display: flex;
   align-items: center;
@@ -60,12 +63,15 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--text);
+  min-width: 0;
+  flex: 1;
 }
 
 .ai-chat-header-actions {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
 }
 
 .ai-chat-clear, .ai-chat-close {
@@ -76,10 +82,9 @@
   color: var(--text-muted);
 }
 
-.ai-chat-close {
-  padding: 3px 7px;
-}
+.ai-chat-close { padding: 3px 7px; }
 
+/* ── Context banner ──────────────────────────────────────── */
 .ai-context-banner {
   display: flex;
   align-items: center;
@@ -92,9 +97,7 @@
   flex-shrink: 0;
 }
 
-.ai-context-icon {
-  font-size: 11px;
-}
+.ai-context-icon { font-size: 11px; }
 
 .ai-file-badge {
   background: var(--bg-elevated);
@@ -106,8 +109,24 @@
   margin-left: auto;
 }
 
+.ai-project-badge {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--accent);
+  background: rgba(88, 166, 255, 0.1);
+  border: 1px solid rgba(88, 166, 255, 0.25);
+  border-radius: 4px;
+  padding: 1px 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+/* ── Messages area ───────────────────────────────────────── */
 .ai-messages {
   flex: 1;
+  min-height: 0;       /* critical — lets this shrink so input stays visible */
   overflow-y: auto;
   padding: 12px 14px;
   display: flex;
@@ -120,9 +139,7 @@
   font-size: 13px;
 }
 
-.ai-welcome p {
-  margin-bottom: 10px;
-}
+.ai-welcome p { margin-bottom: 10px; }
 
 .ai-suggestions {
   display: flex;
@@ -172,9 +189,7 @@
   color: var(--text);
 }
 
-.ai-message-assistant .ai-message-content {
-  color: var(--text);
-}
+.ai-message-assistant .ai-message-content { color: var(--text); }
 
 .ai-message-content p { margin: 4px 0; }
 .ai-message-content ul, .ai-message-content ol { padding-left: 18px; margin: 6px 0; }
@@ -189,17 +204,7 @@
   margin: 8px 0;
 }
 
-.ai-project-badge {
-  font-size: 10px;
-  font-family: var(--font-mono);
-  color: var(--accent);
-  background: rgba(88, 166, 255, 0.1);
-  border: 1px solid rgba(88, 166, 255, 0.25);
-  border-radius: 4px;
-  padding: 1px 6px;
-  margin-left: 2px;
-}
-
+/* ── File written / error cards ──────────────────────────── */
 .ai-file-written-card {
   background: rgba(63, 185, 80, 0.08);
   border: 1px solid rgba(63, 185, 80, 0.3);
@@ -212,11 +217,7 @@
   gap: 6px;
 }
 
-.ai-file-written-icon {
-  font-size: 13px;
-  color: var(--success);
-  flex-shrink: 0;
-}
+.ai-file-written-icon { font-size: 13px; color: var(--success); flex-shrink: 0; }
 
 .ai-file-written-info {
   display: flex;
@@ -263,7 +264,7 @@
   color: var(--error);
 }
 
-
+.ai-error {
   background: rgba(248, 81, 73, 0.1);
   border: 1px solid rgba(248, 81, 73, 0.3);
   border-radius: 6px;
@@ -273,24 +274,25 @@
   line-height: 1.6;
 }
 
+/* ── Input area ──────────────────────────────────────────── */
 .ai-input-area {
   display: flex;
   gap: 6px;
   padding: 10px 12px;
   border-top: 1px solid var(--border);
   background: var(--bg-elevated);
-  flex-shrink: 0;
+  flex-shrink: 0;      /* never compress the input area */
 }
 
 .ai-input {
   flex: 1;
-  resize: none;
+  resize: vertical;    /* user can resize vertically if they want more room */
   border-radius: 6px;
   font-size: 13px;
   line-height: 1.5;
   padding: 7px 10px;
-  min-height: 46px;
-  max-height: 120px;
+  min-height: 60px;    /* comfortable default height */
+  max-height: 200px;
 }
 
 .ai-send-btn {
