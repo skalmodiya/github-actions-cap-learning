@@ -322,6 +322,38 @@ cf login -a \$CF_API -u \$CF_USERNAME -p \$CF_PASSWORD -o \$CF_ORG -s \$CF_SPACE
           command: 'cf target',
         },
         {
+          kind: 'markdown',
+          content: `### Switching org / space
+
+\`cf target\` with flags lets you switch without re-logging in.
+Click **✏** to set your org and space names:`,
+        },
+        {
+          kind: 'run',
+          label: 'Switch org and space',
+          command: 'cf target -o your-org -s your-space',
+        },
+        {
+          kind: 'markdown',
+          content: `You can also switch just one at a time:
+\`\`\`bash
+cf target -s Dev          # switch space only
+cf target -o my-org       # switch org only (resets space)
+\`\`\`
+
+To list all available orgs and spaces you have access to:`,
+        },
+        {
+          kind: 'run',
+          label: 'List orgs',
+          command: 'cf orgs',
+        },
+        {
+          kind: 'run',
+          label: 'List spaces in current org',
+          command: 'cf spaces',
+        },
+        {
           kind: 'run',
           label: 'List apps in current space',
           command: 'cf apps',
