@@ -121,10 +121,12 @@ Navigate to the URL shown by Vite (e.g. `http://localhost:8765`).
 |---|---|
 | What is SAP CAP? | Entities, services, OData, HDI |
 | Install CDS tooling | `npm install -g @sap/cds-dk`, `cds version` |
-| Initialize the project | `cds init .`, project structure |
+| Initialize the project | `cds init .` (structure) + `cds add nodejs` (package.json) |
 | Create a data model | Edit `db/schema.cds` — Books & Authors entities |
 | Create a service | Edit `srv/catalog-service.cds` — OData endpoint |
 | Run locally | `cds watch` with SQLite in-memory database |
+
+> **CDS v8+ note:** `cds init .` no longer generates `package.json`. You must run `cds add nodejs` afterward to create it with `@sap/cds ^9` and `@cap-js/sqlite`.
 
 ### 🚀 Module 3 — BTP CF Deployment (6 steps)
 | Step | What you learn |

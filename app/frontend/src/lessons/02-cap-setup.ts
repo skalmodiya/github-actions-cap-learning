@@ -100,8 +100,8 @@ You only need to do this once per machine.`,
     {
       id: '02-cap-step-3',
       title: 'Choose Project Location & Initialize',
-      contextHints: ['cds init', 'project folder', 'project structure', 'package.json', 'db/', 'srv/', 'scaffolding'],
-      completionCriteria: 'Set a project folder name, then run cds init',
+      contextHints: ['cds init', 'cds add nodejs', 'project folder', 'project structure', 'package.json', 'db/', 'srv/', 'scaffolding'],
+      completionCriteria: 'Set a project folder name, run cds init, then cds add nodejs',
       blocks: [
         {
           kind: 'markdown',
@@ -116,14 +116,32 @@ Give your project a folder name. This folder will be created inside the learning
         },
         {
           kind: 'markdown',
-          content: `### Initialize the project
+          content: `### Step 1 — Scaffold the project structure
 
-Once the folder is set above, run \`cds init\` inside it:`,
+\`cds init .\` creates the folder layout (\`app/\`, \`db/\`, \`srv/\`, \`.gitignore\`, \`readme.md\`):`,
         },
         {
           kind: 'run',
-          label: 'Initialize CAP project',
+          label: 'Initialize CAP project structure',
           command: 'cds init .',
+          useProjectDir: true,
+        },
+        {
+          kind: 'markdown',
+          content: `### Step 2 — Add Node.js support
+
+> **Note:** Since CDS v8+, \`cds init\` no longer generates \`package.json\` automatically.
+> You must run \`cds add nodejs\` to create it with the correct \`@sap/cds\` dependency.
+
+\`cds add nodejs\` creates \`package.json\` with:
+- \`@sap/cds ^9\` — the CAP runtime
+- \`@cap-js/sqlite ^2\` — SQLite for local development
+- \`cds-serve\` start script`,
+        },
+        {
+          kind: 'run',
+          label: 'Add Node.js + package.json',
+          command: 'cds add nodejs',
           useProjectDir: true,
         },
         {
@@ -135,16 +153,17 @@ Once the folder is set above, run \`cds init\` inside it:`,
         {
           kind: 'run',
           label: 'Show project structure',
-          command: 'find . -not -path "./node_modules/*" -not -path "./.git/*" | head -40',
+          command: 'find . -not -path "./node_modules/*" -not -path "./.git/*" | sort',
           useProjectDir: true,
         },
         {
           kind: 'markdown',
-          content: `After running \`cds init\`, you should see:
-- \`package.json\` — with \`@sap/cds\` as a dependency
-- \`db/\` — empty, ready for your data model
-- \`srv/\` — empty, ready for your service
-- \`.cdsrc.json\` — CAP configuration`,
+          content: `After these steps you should see:
+- \`package.json\` — with \`@sap/cds\` dependency ✓
+- \`db/\` — ready for your data model
+- \`srv/\` — ready for your service
+- \`app/\` — ready for UI (optional)
+- \`.gitignore\` — pre-configured for CAP projects`,
         },
       ],
     },
