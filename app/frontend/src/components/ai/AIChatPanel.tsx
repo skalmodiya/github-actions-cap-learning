@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { useAppState } from '../../context/AppStateContext'
 import { useLLMChat } from '../../hooks/useLLMChat'
@@ -34,12 +34,47 @@ CONTEXT TOPICS: ${contextHints.join(', ')}`
   return prompt
 }
 
+const AI_WIDTH_KEY = 'cap-ai-panel-width'
+const DEFAULT_WIDTH = 380
+const MIN_WIDTH = 260
+const MAX_WIDTH = 700
+
+function loadWidth(): number {
+  try { return parseInt(localStorage.getItem(AI_WIDTH_KEY) || '', 10) || DEFAULT_WIDTH } catch { return DEFAULT_WIDTH }
+}
+
 export default function AIChatPanel() {
   const { state, dispatch, activeModule, activeStep, activeProjectDir } = useAppState()
   const { messages, streaming, error, send, clear } = useLLMChat()
   const [input, setInput] = useState('')
+  const [width, setWidth] = useState<number>(loadWidth)
   const messagesRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const dragRef = useRef<{ startX: number; startWidth: number } | null>(null)
+
+  // Persist width
+  useEffect(() => {
+    localStorage.setItem(AI_WIDTH_KEY, String(width))
+  }, [width])
+
+  const onDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    dragRef.current = { startX: e.clientX, startWidth: width }
+    const onMove = (me: MouseEvent) => {
+      if (!dragRef.current) return
+      // dragging left (negative delta) increases width
+      const delta = dragRef.current.startX - me.clientX
+      const next = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, dragRef.current.startWidth + delta))
+      setWidth(Math.round(next))
+    }
+    const onUp = () => {
+      dragRef.current = null
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }, [width])
 
   const isOpen = state.isAIChatOpen
 
@@ -84,7 +119,9 @@ export default function AIChatPanel() {
       </button>
 
       {isOpen && (
-        <div className="ai-chat-panel">
+        <div className="ai-chat-panel" style={{ width }}>
+          {/* Drag handle on the left edge */}
+          <div className="ai-resize-handle" onMouseDown={onDragStart} title="Drag to resize" />
           <div className="ai-chat-header">
             <div className="ai-chat-title">
               <span>🤖</span>

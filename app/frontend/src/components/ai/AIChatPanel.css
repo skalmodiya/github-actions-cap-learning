@@ -35,14 +35,34 @@
 
 /* ── Panel shell ─────────────────────────────────────────── */
 .ai-chat-panel {
-  width: 380px;
+  /* width is set inline via JS — no fixed width here */
   flex-shrink: 0;
   background: var(--bg-surface);
   border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  min-height: 0;       /* allow flex children to shrink/scroll properly */
+  min-height: 0;
+  position: relative;
+}
+
+/* ── Resize handle (left edge) ───────────────────────────── */
+.ai-resize-handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: ew-resize;
+  z-index: 10;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.ai-resize-handle:hover,
+.ai-resize-handle:active {
+  background: var(--accent);
+  opacity: 0.4;
 }
 
 /* ── Header ──────────────────────────────────────────────── */
