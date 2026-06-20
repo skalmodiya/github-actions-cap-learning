@@ -1,8 +1,9 @@
 export type StepBlock =
   | { kind: 'markdown'; content: string }
   | { kind: 'code'; language: string; content: string; filename?: string }
-  | { kind: 'run'; label: string; command: string; cwd?: string }
-  | { kind: 'editor'; path: string; language?: string; description?: string; defaultContent?: string }
+  | { kind: 'run'; label: string; command: string; cwd?: string; useProjectDir?: boolean }
+  | { kind: 'editor'; path: string; language?: string; description?: string; defaultContent?: string; useProjectDir?: boolean }
+  | { kind: 'dirpicker'; label?: string; description?: string }
 
 export interface Step {
   id: string

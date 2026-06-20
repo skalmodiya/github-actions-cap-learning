@@ -115,7 +115,29 @@
   to { transform: rotate(360deg); }
 }
 
-.run-output {
+.run-cwd-badge {
+  font-size: 11px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  background: rgba(88, 166, 255, 0.1);
+  border: 1px solid rgba(88, 166, 255, 0.25);
+  border-radius: 4px;
+  padding: 1px 6px;
+  white-space: nowrap;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.run-needs-dir {
+  padding: 7px 14px;
+  font-size: 12px;
+  color: var(--warning);
+  background: rgba(210, 153, 34, 0.08);
+  border-top: 1px solid var(--border);
+}
+
+
   padding: 10px 14px;
   font-family: var(--font-mono);
   font-size: 12px;

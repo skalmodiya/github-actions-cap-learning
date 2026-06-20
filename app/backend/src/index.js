@@ -9,14 +9,13 @@ import { llmRouter } from './routes/llm.js'
 import { WORK_DIR, SHELL_EXE } from './lib/paths.js'
 
 const app = express()
-const PORT = process.env.PORT || 19110
+const PORT = process.env.PORT || 19200
 
 app.use(cors())
 app.use(express.json({ limit: '4mb' }))
 
 app.use('/api/execute', executeRouter)
-app.use('/api/file', filesRouter)
-app.use('/api/ls', filesRouter)
+app.use('/api', filesRouter)
 app.use('/api/settings', settingsRouter)
 app.use('/api/progress', progressRouter)
 app.use('/api/llm', llmRouter)

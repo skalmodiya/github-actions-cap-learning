@@ -7,7 +7,6 @@ export const filesRouter = Router()
 
 function safePath(p) {
   if (!p) throw new Error('path required')
-  // Normalise separators and resolve against WORK_DIR
   const normalised = p.replace(/\//g, '\\')
   const resolved = resolve(WORK_DIR, normalised.replace(/^[\\/]/, ''))
   const workDirNorm = resolve(WORK_DIR)
@@ -17,6 +16,7 @@ function safePath(p) {
   return resolved
 }
 
+// GET /api/file?path=...
 filesRouter.get('/file', async (req, res) => {
   try {
     const fullPath = safePath(req.query.path)
@@ -29,6 +29,7 @@ filesRouter.get('/file', async (req, res) => {
   }
 })
 
+// POST /api/file  { path, content }
 filesRouter.post('/file', async (req, res) => {
   try {
     const { path: p, content } = req.body
@@ -43,6 +44,7 @@ filesRouter.post('/file', async (req, res) => {
   }
 })
 
+// GET /api/ls?path=...
 filesRouter.get('/ls', async (req, res) => {
   try {
     const fullPath = safePath(req.query.path || '')

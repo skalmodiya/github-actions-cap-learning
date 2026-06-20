@@ -7,6 +7,8 @@ import './EditorBlock.css'
 
 interface EditorBlockProps {
   block: Extract<StepBlock, { kind: 'editor' }>
+  // Set by StepView when block.useProjectDir is true
+  projectDir?: string
 }
 
 function langFromPath(path: string): string {
@@ -26,7 +28,7 @@ function langFromPath(path: string): string {
   return map[ext ?? ''] || 'plaintext'
 }
 
-export default function EditorBlock({ block }: EditorBlockProps) {
+export default function EditorBlock({ block, projectDir }: EditorBlockProps) {
   const { dispatch } = useAppState()
   const [content, setContent] = useState<string>('')
   const [savedContent, setSavedContent] = useState<string>('')
@@ -35,30 +37,32 @@ export default function EditorBlock({ block }: EditorBlockProps) {
   const [error, setError] = useState<string | null>(null)
   const [saveMsg, setSaveMsg] = useState<string | null>(null)
 
+  // If useProjectDir, prepend projectDir/ to the path
+  const resolvedPath = projectDir ? `${projectDir}/${block.path}` : block.path
   const language = block.language || langFromPath(block.path)
 
   useEffect(() => {
     setLoading(true)
     setError(null)
-    api.readFile(block.path)
+    api.readFile(resolvedPath)
       .then(r => {
         setContent(r.content)
         setSavedContent(r.content)
-        dispatch({ type: 'SET_OPEN_FILE', path: block.path, content: r.content })
+        dispatch({ type: 'SET_OPEN_FILE', path: resolvedPath, content: r.content })
       })
       .catch(() => {
         // File doesn't exist yet — start with default content or empty
         const initial = block.defaultContent ?? ''
         setContent(initial)
         setSavedContent(initial)
-        dispatch({ type: 'SET_OPEN_FILE', path: block.path, content: initial })
+        dispatch({ type: 'SET_OPEN_FILE', path: resolvedPath, content: initial })
       })
       .finally(() => setLoading(false))
 
     return () => {
       dispatch({ type: 'SET_OPEN_FILE', path: null, content: '' })
     }
-  }, [block.path, block.defaultContent])
+  }, [resolvedPath, block.defaultContent])
 
   const isDirty = content !== savedContent
 
@@ -66,10 +70,10 @@ export default function EditorBlock({ block }: EditorBlockProps) {
     setSaving(true)
     setSaveMsg(null)
     try {
-      await api.writeFile(block.path, content)
+      await api.writeFile(resolvedPath, content)
       setSavedContent(content)
       setSaveMsg('Saved!')
-      dispatch({ type: 'SET_OPEN_FILE', path: block.path, content })
+      dispatch({ type: 'SET_OPEN_FILE', path: resolvedPath, content })
       setTimeout(() => setSaveMsg(null), 2000)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err))
@@ -83,7 +87,7 @@ export default function EditorBlock({ block }: EditorBlockProps) {
       <div className="editor-toolbar">
         <div className="editor-file-info">
           <span className="editor-icon">📄</span>
-          <span className="editor-path">{block.path}</span>
+          <span className="editor-path">{resolvedPath}</span>
           {isDirty && <span className="editor-dirty">●</span>}
         </div>
         {block.description && (

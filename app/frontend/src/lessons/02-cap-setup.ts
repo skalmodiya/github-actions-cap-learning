@@ -99,30 +99,44 @@ You only need to do this once per machine.`,
     },
     {
       id: '02-cap-step-3',
-      title: 'Initialize the CAP Project',
-      contextHints: ['cds init', 'project structure', 'package.json', 'db/', 'srv/', 'scaffolding'],
-      completionCriteria: 'Run cds init and verify the folder structure was created',
+      title: 'Choose Project Location & Initialize',
+      contextHints: ['cds init', 'project folder', 'project structure', 'package.json', 'db/', 'srv/', 'scaffolding'],
+      completionCriteria: 'Set a project folder name, then run cds init',
       blocks: [
         {
           kind: 'markdown',
-          content: `## Scaffold a CAP Project
+          content: `## Choose Where to Create Your CAP Project
 
-\`cds init\` creates a minimal CAP project in the current directory.`,
+Give your project a folder name. This folder will be created inside the learning workspace and all subsequent commands will run inside it.`,
+        },
+        {
+          kind: 'dirpicker',
+          label: 'Choose your project folder name',
+          description: 'Pick a short name — e.g. "my-bookshop" or "cap-demo". Only letters, numbers, hyphens and underscores.',
+        },
+        {
+          kind: 'markdown',
+          content: `### Initialize the project
+
+Once the folder is set above, run \`cds init\` inside it:`,
         },
         {
           kind: 'run',
           label: 'Initialize CAP project',
           command: 'cds init .',
+          useProjectDir: true,
         },
         {
           kind: 'run',
           label: 'Install npm dependencies',
           command: 'npm install',
+          useProjectDir: true,
         },
         {
           kind: 'run',
           label: 'Show project structure',
           command: 'find . -not -path "./node_modules/*" -not -path "./.git/*" | head -40',
+          useProjectDir: true,
         },
         {
           kind: 'markdown',
@@ -152,6 +166,7 @@ CDS uses a SQL-like syntax to define entities (tables).`,
           path: 'db/schema.cds',
           language: 'plaintext',
           description: 'Define Books and Authors entities',
+          useProjectDir: true,
           defaultContent: `namespace my.bookshop;
 
 entity Books {
@@ -204,6 +219,7 @@ Services live in the \`srv/\` folder.`,
           path: 'srv/catalog-service.cds',
           language: 'plaintext',
           description: 'Expose Books and Authors via OData service',
+          useProjectDir: true,
           defaultContent: `using my.bookshop as my from '../db/schema';
 
 service CatalogService {
@@ -248,6 +264,7 @@ All CRUD operations are provided automatically — no controller code needed.`,
         {
           kind: 'run',
           label: 'Add some test data (optional)',
+          useProjectDir: true,
           command: `mkdir -p db/data && cat > db/data/my.bookshop-Books.csv << 'EOF'
 ID,title,author_ID,stock,price
 1,The Hitchhiker's Guide to the Galaxy,1,50,12.99
@@ -259,6 +276,7 @@ EOF`,
           kind: 'run',
           label: 'Compile CDS model (check for errors)',
           command: 'cds compile db/ srv/',
+          useProjectDir: true,
         },
         {
           kind: 'markdown',
@@ -270,7 +288,8 @@ Open **http://localhost:4004** in a browser to see the CAP service.
         {
           kind: 'run',
           label: 'Start CDS development server',
-          command: 'cds watch --open',
+          command: 'cds watch',
+          useProjectDir: true,
         },
       ],
     },

@@ -99,7 +99,7 @@ MBT is published on npm:`,
       id: '03-btp-step-3',
       title: 'Create mta.yaml',
       contextHints: ['mta.yaml', 'MTA descriptor', 'modules', 'resources', 'hdi-container', 'xsuaa', 'nodejs'],
-      completionCriteria: 'Save mta.yaml with your module and resource definitions',
+      completionCriteria: 'Set your CAP project folder, then save mta.yaml',
       blocks: [
         {
           kind: 'markdown',
@@ -108,13 +108,25 @@ MBT is published on npm:`,
 The \`mta.yaml\` (Multi-Target Application descriptor) defines your entire application topology:
 - What gets deployed (modules = apps)
 - What gets created (resources = BTP services)
-- How they connect (requires/provides)`,
+- How they connect (requires/provides)
+
+First, point to the CAP project you created in Module 2:`,
+        },
+        {
+          kind: 'dirpicker',
+          label: 'Which CAP project folder to deploy?',
+          description: 'Enter the folder name you used in Module 2 (e.g. "my-bookshop"). All build and deploy commands will run inside it.',
+        },
+        {
+          kind: 'markdown',
+          content: `Now edit \`mta.yaml\` inside that project folder:`,
         },
         {
           kind: 'editor',
           path: 'mta.yaml',
           language: 'yaml',
           description: 'MTA descriptor for your CAP application',
+          useProjectDir: true,
           defaultContent: `_schema-version: '3.1'
 ID: my-bookshop
 version: 1.0.0
@@ -180,6 +192,7 @@ resources:
         {
           kind: 'run',
           label: 'Create xs-security.json (XSUAA config)',
+          useProjectDir: true,
           command: `cat > xs-security.json << 'EOF'
 {
   "xsappname": "my-bookshop",
@@ -211,21 +224,25 @@ Building happens in two stages:
           kind: 'run',
           label: 'Stage 1 — CDS build',
           command: 'cds build --production',
+          useProjectDir: true,
         },
         {
           kind: 'run',
           label: 'Verify gen/ folder was created',
           command: 'find gen/ -type f | head -20',
+          useProjectDir: true,
         },
         {
           kind: 'run',
           label: 'Stage 2 — MBT build (creates .mtar)',
           command: 'mbt build -t ./mta_archives',
+          useProjectDir: true,
         },
         {
           kind: 'run',
           label: 'Verify .mtar archive was created',
           command: 'ls -lh mta_archives/',
+          useProjectDir: true,
         },
         {
           kind: 'markdown',

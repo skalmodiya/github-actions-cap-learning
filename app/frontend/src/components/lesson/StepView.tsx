@@ -3,13 +3,14 @@ import ReactMarkdown from 'react-markdown'
 import rehypeHighlight from 'rehype-highlight'
 import { useAppState } from '../../context/AppStateContext'
 import RunBlock from './RunBlock'
+import DirPickerBlock from './DirPickerBlock'
 import './StepView.css'
 import 'highlight.js/styles/github-dark.css'
 
 const EditorBlock = lazy(() => import('./EditorBlock'))
 
 export default function StepView() {
-  const { activeStep } = useAppState()
+  const { activeStep, activeProjectDir } = useAppState()
 
   if (!activeStep) return null
 
@@ -49,21 +50,30 @@ export default function StepView() {
             )
           }
 
+          if (block.kind === 'dirpicker') {
+            return <DirPickerBlock key={idx} block={block} />
+          }
+
           if (block.kind === 'run') {
-            return <RunBlock key={idx} block={block} />
+            return (
+              <RunBlock
+                key={idx}
+                block={block}
+                projectDir={block.useProjectDir ? activeProjectDir : undefined}
+              />
+            )
           }
 
           if (block.kind === 'editor') {
             return (
               <Suspense
                 key={idx}
-                fallback={
-                  <div className="editor-loading">
-                    Loading editor…
-                  </div>
-                }
+                fallback={<div className="editor-loading">Loading editor…</div>}
               >
-                <EditorBlock block={block} />
+                <EditorBlock
+                  block={block}
+                  projectDir={block.useProjectDir ? activeProjectDir : undefined}
+                />
               </Suspense>
             )
           }

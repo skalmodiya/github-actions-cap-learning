@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer, useEffect, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react'
 import type { Module, ProgressState } from '../types'
 import { MODULE_LIST } from '../lessons/index'
 import * as api from '../lib/api'
@@ -12,6 +12,8 @@ interface AppState {
   openFilePath: string | null
   openFileContent: string
   terminalVisible: boolean
+  // Per-module chosen project directory (relative to WORK_DIR, e.g. "my-bookshop")
+  projectDirs: Record<string, string>
 }
 
 type Action =
@@ -23,6 +25,7 @@ type Action =
   | { type: 'SET_OPEN_FILE'; path: string | null; content: string }
   | { type: 'SET_TERMINAL_VISIBLE'; visible: boolean }
   | { type: 'LOAD_PROGRESS'; progress: ProgressState }
+  | { type: 'SET_PROJECT_DIR'; moduleId: string; dir: string }
 
 const initialProgress: ProgressState = {
   completedSteps: [],
@@ -39,6 +42,7 @@ const initialState: AppState = {
   openFilePath: null,
   openFileContent: '',
   terminalVisible: true,
+  projectDirs: {},
 }
 
 function reducer(state: AppState, action: Action): AppState {
@@ -82,6 +86,11 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, openFilePath: action.path, openFileContent: action.content }
     case 'SET_TERMINAL_VISIBLE':
       return { ...state, terminalVisible: action.visible }
+    case 'SET_PROJECT_DIR':
+      return {
+        ...state,
+        projectDirs: { ...state.projectDirs, [action.moduleId]: action.dir },
+      }
     case 'LOAD_PROGRESS': {
       const lastModuleId = action.progress.lastModuleId || state.activeModuleId
       const lastModule = MODULE_LIST.find(m => m.id === lastModuleId)
@@ -105,6 +114,8 @@ interface AppStateContextValue {
   dispatch: React.Dispatch<Action>
   activeModule: Module | undefined
   activeStep: Module['steps'][number] | undefined
+  // Resolved project directory for the active module (empty string = WORK_DIR root)
+  activeProjectDir: string
 }
 
 const AppStateContext = createContext<AppStateContextValue | null>(null)
@@ -127,9 +138,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const activeModule = state.modules.find(m => m.id === state.activeModuleId)
   const activeStep = activeModule?.steps[state.activeStepIndex]
+  const activeProjectDir = state.projectDirs[state.activeModuleId] ?? ''
 
   return (
-    <AppStateContext.Provider value={{ state, dispatch, activeModule, activeStep }}>
+    <AppStateContext.Provider value={{ state, dispatch, activeModule, activeStep, activeProjectDir }}>
       {children}
     </AppStateContext.Provider>
   )

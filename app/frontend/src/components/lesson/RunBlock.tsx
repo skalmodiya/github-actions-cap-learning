@@ -5,6 +5,8 @@ import './RunBlock.css'
 
 interface RunBlockProps {
   block: Extract<StepBlock, { kind: 'run' }>
+  // Set by StepView when block.useProjectDir is true
+  projectDir?: string
 }
 
 function dispatchTerminalEvent(lines: import('../../types').TerminalLine[], running: boolean, exitCode: number | null, elapsed: number | null) {
@@ -13,11 +15,13 @@ function dispatchTerminalEvent(lines: import('../../types').TerminalLine[], runn
   }))
 }
 
-export default function RunBlock({ block }: RunBlockProps) {
+export default function RunBlock({ block, projectDir }: RunBlockProps) {
   const { lines, running, exitCode, elapsed, run, clear } = useSSE()
   const [ran, setRan] = useState(false)
 
-  // Sync to terminal panel after every state change — never during render
+  // Resolve cwd: explicit block.cwd wins, then projectDir, then backend default (WORK_DIR)
+  const resolvedCwd = block.cwd ?? projectDir ?? undefined
+
   useEffect(() => {
     if (ran) {
       dispatchTerminalEvent(lines, running, exitCode, elapsed)
@@ -28,7 +32,7 @@ export default function RunBlock({ block }: RunBlockProps) {
     setRan(true)
     clear()
     dispatchTerminalEvent([], true, null, null)
-    await run(block.command, block.cwd)
+    await run(block.command, resolvedCwd)
   }
 
   const lastLines = lines.slice(-8)
@@ -42,6 +46,11 @@ export default function RunBlock({ block }: RunBlockProps) {
           <code className="run-command">{block.command}</code>
         </div>
         <div className="run-actions">
+          {projectDir && (
+            <span className="run-cwd-badge" title={`Running in: ${projectDir}/`}>
+              📁 {projectDir}/
+            </span>
+          )}
           {elapsed !== null && (
             <span className="run-elapsed">{(elapsed / 1000).toFixed(1)}s</span>
           )}
@@ -53,8 +62,8 @@ export default function RunBlock({ block }: RunBlockProps) {
           <button
             className="run-btn"
             onClick={handleRun}
-            disabled={running}
-            title={block.label}
+            disabled={running || (block.useProjectDir && !projectDir)}
+            title={block.useProjectDir && !projectDir ? 'Set a project folder above first' : block.label}
           >
             {running ? (
               <><span className="run-spinner">⟳</span> Running…</>
@@ -64,6 +73,12 @@ export default function RunBlock({ block }: RunBlockProps) {
           </button>
         </div>
       </div>
+
+      {block.useProjectDir && !projectDir && (
+        <div className="run-needs-dir">
+          ⬆ Set a project folder above before running this command
+        </div>
+      )}
 
       {hasOutput && (
         <div className="run-output">
