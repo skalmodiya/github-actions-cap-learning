@@ -34,7 +34,7 @@ export default function TerminalPanel({ layout, onLayoutChange }: TerminalPanelP
   const dragRef = useRef<{ startPos: number; startSize: number } | null>(null)
 
   const { lines: sseLines, running: sseRunning, exitCode: sseExitCode,
-          elapsed: sseElapsed, run, clear: clearSSE } = useSSE()
+          elapsed: sseElapsed, run, stop, clear: clearSSE } = useSSE()
 
   useEffect(() => {
     setCwdOverride(activeProjectDir || '')
@@ -115,7 +115,10 @@ export default function TerminalPanel({ layout, onLayoutChange }: TerminalPanelP
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') { e.preventDefault(); handleRun() }
-    else if (e.key === 'ArrowUp') {
+    else if (e.key === 'c' && e.ctrlKey && isAnyRunning) {
+      e.preventDefault()
+      stop()
+    } else if (e.key === 'ArrowUp') {
       e.preventDefault()
       const idx = Math.min(historyIdx + 1, history.length - 1)
       setHistoryIdx(idx)
@@ -193,6 +196,17 @@ export default function TerminalPanel({ layout, onLayoutChange }: TerminalPanelP
             </button>
           </div>
 
+          {/* Stop button — only when something is running */}
+          {isAnyRunning && (
+            <button
+              className="terminal-stop-btn"
+              onClick={stop}
+              title="Stop running process (Ctrl+C)"
+            >
+              ■ Stop
+            </button>
+          )}
+
           {/* Size reset */}
           <button
             className="terminal-clear-btn"
@@ -258,7 +272,7 @@ export default function TerminalPanel({ layout, onLayoutChange }: TerminalPanelP
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Enter any command… (↑↓ history, Ctrl+L clear)"
+                placeholder="Enter any command… (↑↓ history, Ctrl+C stop, Ctrl+L clear)"
                 disabled={isAnyRunning}
                 spellCheck={false}
                 autoComplete="off"

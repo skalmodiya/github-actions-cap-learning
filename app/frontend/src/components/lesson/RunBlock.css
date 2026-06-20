@@ -106,7 +106,25 @@
   border-color: var(--accent);
 }
 
-.run-spinner {
+.run-stop-btn {
+  font-size: 11px;
+  padding: 4px 10px;
+  background: rgba(248, 81, 73, 0.12);
+  border: 1px solid rgba(248, 81, 73, 0.4);
+  border-radius: 4px;
+  color: var(--error);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.run-stop-btn:hover {
+  background: rgba(248, 81, 73, 0.25);
+  border-color: var(--error);
+  color: var(--error);
+}
+
+
   display: inline-block;
   animation: spin 1s linear infinite;
 }

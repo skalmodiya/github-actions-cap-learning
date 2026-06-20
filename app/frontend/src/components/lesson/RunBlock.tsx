@@ -16,7 +16,7 @@ function dispatchTerminalEvent(lines: import('../../types').TerminalLine[], runn
 }
 
 export default function RunBlock({ block, projectDir }: RunBlockProps) {
-  const { lines, running, exitCode, elapsed, run, clear } = useSSE()
+  const { lines, running, exitCode, elapsed, run, stop, clear } = useSSE()
   const [ran, setRan] = useState(false)
 
   // Resolve cwd: explicit block.cwd wins, then projectDir, then backend default (WORK_DIR)
@@ -65,12 +65,20 @@ export default function RunBlock({ block, projectDir }: RunBlockProps) {
             disabled={running || (block.useProjectDir && !projectDir)}
             title={block.useProjectDir && !projectDir ? 'Set a project folder above first' : block.label}
           >
-            {running ? (
-              <><span className="run-spinner">⟳</span> Running…</>
-            ) : (
-              <><span>▶</span> {block.label}</>
-            )}
+            {running
+              ? <><span className="run-spinner">⟳</span> Running…</>
+              : <><span>▶</span> {block.label}</>
+            }
           </button>
+          {running && (
+            <button
+              className="run-stop-btn"
+              onClick={stop}
+              title="Stop process (Ctrl+C)"
+            >
+              ■ Stop
+            </button>
+          )}
         </div>
       </div>
 

@@ -7,6 +7,7 @@ interface UseSSEResult {
   exitCode: number | null
   elapsed: number | null
   run: (command: string, cwd?: string) => Promise<void>
+  stop: () => void
   clear: () => void
 }
 
@@ -84,5 +85,9 @@ export function useSSE(): UseSSEResult {
     }
   }, [])
 
-  return { lines, running, exitCode, elapsed, run, clear }
+  const stop = useCallback(() => {
+    if (abortRef.current) abortRef.current.abort()
+  }, [])
+
+  return { lines, running, exitCode, elapsed, run, stop, clear }
 }
