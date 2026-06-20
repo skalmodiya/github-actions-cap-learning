@@ -9,7 +9,7 @@ import { llmRouter } from './routes/llm.js'
 import { WORK_DIR, SHELL_EXE } from './lib/paths.js'
 
 const app = express()
-const PORT = process.env.PORT || 19200
+const PORT = process.env.PORT || 19210
 
 app.use(cors())
 app.use(express.json({ limit: '4mb' }))

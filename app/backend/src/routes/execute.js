@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { spawn } from 'child_process'
+import { resolve } from 'path'
 import { WORK_DIR, SHELL_EXE } from '../lib/paths.js'
 
 export const executeRouter = Router()
@@ -8,7 +9,9 @@ executeRouter.post('/', (req, res) => {
   const { command, cwd } = req.body
   if (!command) return res.status(400).json({ error: 'command required' })
 
-  const workDir = cwd || WORK_DIR
+  // Always resolve cwd against WORK_DIR so relative paths (e.g. "my-bookshop")
+  // become absolute Windows paths that spawn() can use
+  const workDir = cwd ? resolve(WORK_DIR, cwd) : WORK_DIR
   const start = Date.now()
 
   res.setHeader('Content-Type', 'text/event-stream')
