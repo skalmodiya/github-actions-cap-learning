@@ -252,7 +252,9 @@ export default function TerminalPanel({ layout, onLayoutChange }: TerminalPanelP
           >
             {allLines.length === 0 ? (
               <div className="terminal-empty">
-                Type a command below or click a <strong>▶ Run</strong> button in the lesson.
+                <span className="terminal-empty-icon">⬛</span>
+                <span>Type a command below or click <strong>▶ Run</strong> in the lesson</span>
+                <span className="terminal-empty-hint">↑↓ history · Ctrl+C stop · Ctrl+L clear</span>
               </div>
             ) : (
               allLines.map((line, i) => (
