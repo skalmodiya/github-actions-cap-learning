@@ -23,12 +23,16 @@ Click through structured lessons, run real shell commands with a single button, 
 
 | Feature | Details |
 |---|---|
-| **Structured lessons** | 3 modules, 17 steps — GitHub Actions Basics, CAP Project Setup, BTP CF Deployment |
-| **Click-to-run commands** | Every lesson step can have runnable shell commands — output streams live to a terminal panel |
-| **Monaco code editor** | Edit files in-browser with syntax highlighting; saves directly to your project directory |
-| **AI Tutor** | Chat with an LLM about the current step — context (module, step, open file) is injected automatically |
-| **Progress tracking** | Completed steps are persisted to `~/.githubActionsCAP-progress.json` |
-| **Settings page** | Connect to any LLM provider (Anthropic, OpenAI, Gemini, LiteLLM) via the Hyperspace proxy |
+| **6 learning modules** | 38 steps across GHA Basics, CAP Setup, BTP Deployment, GHA Advanced, CAP Advanced, Monitoring |
+| **Click-to-run commands** | Commands stream live output to the terminal; ✏ edit before running to change any hardcoded value |
+| **■ Stop button** | Kill any long-running process (e.g. `cds watch`, `cf logs`) instantly |
+| **Monaco code editor** | Edit files in-browser with syntax highlighting; real-time reload when file changes externally |
+| **AI Tutor** | Chat with an LLM; AI can write/update files directly from the chat |
+| **File Explorer** | Sidebar tree of all project files — click any file to open it in Monaco |
+| **GitHub Actions status** | Live workflow run status, jobs and steps in the sidebar (SSE polling) |
+| **Flexible terminal** | Dock bottom or right, drag to resize, ad-hoc commands with history, Ctrl+C stop |
+| **Project directory picker** | Choose where to create your CAP project; all commands run inside it |
+| **Progress tracking** | Completed steps persisted to `~/.githubActionsCAP-progress.json` |
 
 ---
 
@@ -36,17 +40,24 @@ Click through structured lessons, run real shell commands with a single button, 
 
 ```
 app/
-├── backend/     Express + Node.js  (port 19110 by default)
+├── backend/     Express + Node.js
 │   └── src/
-│       ├── routes/execute.js    ← SSE command runner
-│       ├── routes/files.js      ← read/write project files
-│       ├── routes/llm.js        ← LLM proxy (streaming)
-│       ├── routes/settings.js   ← persist LLM config
+│       ├── routes/execute.js    ← SSE command runner (kills whole process tree on stop)
+│       ├── routes/files.js      ← read/write/watch project files, recursive tree listing
+│       ├── routes/github.js     ← GitHub Actions API proxy (runs, jobs, SSE watch)
+│       ├── routes/llm.js        ← LLM proxy with write_file tool support
+│       ├── routes/settings.js   ← persist LLM + GitHub config
 │       └── routes/progress.js   ← persist lesson progress
-└── frontend/    React 18 + Vite + TypeScript  (port 8765+)
+└── frontend/    React 18 + Vite + TypeScript
     └── src/
-        ├── lessons/             ← Lesson content (TypeScript modules)
-        ├── components/          ← UI: Sidebar, LessonShell, RunBlock, EditorBlock, AIChatPanel, SettingsPage
+        ├── lessons/             ← 6 lesson modules (TypeScript)
+        ├── components/
+        │   ├── layout/          ← Header, Sidebar, FileExplorer, FileEditorOverlay
+        │   ├── lesson/          ← LessonShell, RunBlock, EditorBlock, DirPickerBlock
+        │   ├── terminal/        ← TerminalPanel (bottom/right dock, resizable)
+        │   ├── ai/              ← AIChatPanel (resizable, file-write tool)
+        │   ├── github/          ← GHAStatusPanel (live run status)
+        │   └── settings/        ← SettingsPage (LLM + GitHub config)
         ├── context/             ← AppStateContext, SettingsContext
         └── hooks/               ← useSSE, useLLMChat
 ```
@@ -83,19 +94,14 @@ cd ../frontend && npm install
 ```bash
 cd app/backend
 node src/index.js
-# Listening on http://localhost:19110
+# Starts on port 19260 (or set PORT env var)
 ```
 
 **Terminal 2 — Frontend:**
 ```bash
 cd app/frontend
 npm run dev
-# Open http://localhost:8765 (or next available port)
-```
-
-Or use the included start script (Git Bash):
-```bash
-bash start.sh
+# Opens on http://localhost:8765 (or next available port)
 ```
 
 ### 4. Open the app
@@ -126,7 +132,7 @@ Navigate to the URL shown by Vite (e.g. `http://localhost:8765`).
 | Create a service | Edit `srv/catalog-service.cds` — OData endpoint |
 | Run locally | `cds watch` with SQLite in-memory database |
 
-> **CDS v8+ note:** `cds init .` no longer generates `package.json`. You must run `cds add nodejs` afterward to create it with `@sap/cds ^9` and `@cap-js/sqlite`.
+> **CDS v8+ note:** `cds init .` no longer generates `package.json`. Run `cds add nodejs` afterward to create it with `@sap/cds ^9`.
 
 ### 🚀 Module 3 — BTP CF Deployment (6 steps)
 | Step | What you learn |
@@ -135,22 +141,61 @@ Navigate to the URL shown by Vite (e.g. `http://localhost:8765`).
 | Install CF CLI & MBT | `cf version`, `npm install -g mbt` |
 | Create mta.yaml | MTA descriptor — modules, resources, bindings |
 | Build the MTAR | `cds build --production` + `mbt build` |
-| Login to Cloud Foundry | `cf login`, API endpoints by region |
+| Login to Cloud Foundry | `cf login` with username/password or SSO; `cf target` to switch org/space |
 | GitHub Actions deploy workflow | Full CI/CD pipeline in `.github/workflows/deploy.yml` |
+
+### 🔬 Module 4 — GHA Advanced Patterns (8 steps)
+| Step | What you learn |
+|---|---|
+| Reusable Workflows | `workflow_call` trigger, caller/callee pattern, inputs & secrets |
+| Matrix Builds | Parallel jobs across Node versions and OSes, `include`/`exclude` |
+| Environments & Approvals | Protection rules, required reviewers, deployment gates |
+| OIDC — Keyless Auth | Federated identity, no stored CF credentials, `id-token: write` |
+| PR Validation Workflow | `cds compile` check, lint, tests on every pull request |
+| Caching Dependencies | `actions/cache` for npm, mbt, cds-dk — 30–60s faster builds |
+| Custom Composite Actions | Reusable `.github/actions/` with typed inputs/outputs |
+| Debugging Failed Runs | `ACTIONS_STEP_DEBUG`, `gh run view --log-failed`, tmate SSH |
+
+### 🔐 Module 5 — CAP Advanced Features (7 steps)
+| Step | What you learn |
+|---|---|
+| XSUAA Authentication | OAuth2/OIDC on BTP, `xs-security.json`, scopes, role-templates |
+| Securing Services | `@requires`, `@restrict`, instance-level security with `where:` |
+| HANA Cloud | `cds add hana`, HDI containers, `mta.yaml` HDI resource |
+| CDS Fiori Annotations | `@UI.LineItem`, `@UI.HeaderInfo`, `@Capabilities`, Fiori elements preview |
+| Remote Services & Destinations | `cds.requires` config, `cds import`, Destination service |
+| CAP Plugins | Audit logging, notifications, attachments via `@cap-js/*` packages |
+| Multitenancy with MTX | `cds add mtx`, `@sap/cds-mtxs`, tenant isolation |
+
+### 📊 Module 6 — Monitoring & Troubleshooting (6 steps)
+| Step | What you learn |
+|---|---|
+| CF Application Logs | `cf logs --recent` vs live streaming; reading APP/RTR/STG sources |
+| CF Events & Crash Analysis | `cf events`, `cf app`, crash reasons (OOM, startup timeout) |
+| CF Services Status | `cf services`, `cf service`, `cf env`, reading VCAP_SERVICES |
+| GitHub Actions Logs (gh CLI) | `gh run list`, `gh run view --log-failed`, `gh run rerun --failed-only` |
+| Common Failure Patterns | 8 common BTP deployment errors with causes and fixes |
+| Health Checks & Scaling | `cf set-health-check`, `cf scale`, rolling restarts |
 
 ---
 
-## AI Tutor Setup
+## AI Tutor
 
-The AI Tutor connects to your local **Hyperspace LLM Proxy**.
+The AI Tutor connects to your local **Hyperspace LLM Proxy** and can both answer questions and **write files directly**.
 
+### Setup
 1. Click **⚙ Settings** in the top-right corner
-2. Select your preferred **Provider** (LiteLLM recommended — unified access to all models)
+2. Select **Provider** (LiteLLM recommended)
 3. Confirm **Base URL** is `http://localhost:6655`
-4. Enter your **API Key** if required
-5. Click **↻ Fetch Models** to populate the model selector
-6. Click **💾 Save Settings**
-7. Click the **🤖 AI Tutor** tab on any lesson step
+4. Click **↻ Fetch Models**, select a model
+5. Click **💾 Save Settings**
+6. Click **🤖 AI Tutor** on any lesson step
+
+### AI File Editing
+Ask the tutor to update files directly:
+> *"Update db/schema.cds to use UUID keys and add a description field"*
+
+The AI uses a `write_file` tool — the file is written to disk and the Monaco editor reloads instantly.
 
 ### Supported Providers
 
@@ -163,40 +208,34 @@ The AI Tutor connects to your local **Hyperspace LLM Proxy**.
 
 ---
 
-## Project Structure
+## GitHub Actions Live Status
 
-```
-githubActionsCAP/
-├── app/
-│   ├── backend/
-│   │   ├── package.json
-│   │   └── src/
-│   │       ├── index.js                  ← Express entry point (port 19110)
-│   │       ├── lib/paths.js              ← WORK_DIR, SHELL_EXE, file paths
-│   │       └── routes/
-│   │           ├── execute.js            ← POST /api/execute  (SSE)
-│   │           ├── files.js              ← GET/POST /api/file, GET /api/ls
-│   │           ├── settings.js           ← GET/POST /api/settings
-│   │           ├── progress.js           ← GET/POST /api/progress
-│   │           └── llm.js                ← POST /api/llm/chat, GET /api/llm/models
-│   └── frontend/
-│       ├── package.json
-│       ├── vite.config.ts                ← Proxies /api → backend
-│       └── src/
-│           ├── types.ts                  ← StepBlock, Module, Step, AppSettings
-│           ├── lessons/                  ← 01-gha-basics, 02-cap-setup, 03-btp-deployment
-│           ├── context/                  ← AppStateContext, SettingsContext
-│           ├── hooks/                    ← useSSE, useLLMChat
-│           ├── lib/api.ts                ← fetch wrappers for all backend routes
-│           └── components/
-│               ├── layout/               ← Header, Sidebar
-│               ├── lesson/               ← LessonShell, StepView, RunBlock, EditorBlock, StepNav
-│               ├── terminal/             ← TerminalPanel
-│               ├── ai/                   ← AIChatPanel
-│               └── settings/             ← SettingsPage
-├── .gitignore
-└── start.sh                              ← Start both servers (Git Bash)
-```
+Connect your repo to see live workflow run status in the sidebar.
+
+1. Go to **⚙ Settings → GitHub Integration**
+2. Create a PAT at **GitHub → Settings → Developer settings → Personal access tokens** with `repo` + `workflow` scopes
+3. Enter your **token**, **owner** (GitHub username), and **repo name**
+4. Click **🔌 Test Connection**
+
+The **⚡ GitHub Actions** panel in the sidebar shows:
+- Run list with ✓/✗/⟳ status, branch, commit SHA, duration
+- Expand any run to see jobs and individual step status
+- Auto-refreshes via SSE every 20s while runs are in progress
+- **Open in GitHub ↗** link for full log access
+
+---
+
+## Terminal Features
+
+| Feature | How |
+|---|---|
+| **Ad-hoc commands** | Type in the `$` input bar at the bottom, press Enter |
+| **Command history** | ↑/↓ arrows to navigate last 50 commands |
+| **Stop running process** | Click **■ Stop** or press **Ctrl+C** in the input |
+| **Dock position** | Click **⬇** (bottom) or **➡** (right panel) in toolbar |
+| **Resize** | Drag the top/left edge handle; **⤢** resets to default size |
+| **Clear output** | Click **Clear** or press **Ctrl+L** |
+| **Working directory** | `cwd:` row shows active project dir, editable for one-off paths |
 
 ---
 
@@ -205,57 +244,84 @@ githubActionsCAP/
 | Endpoint | Method | Description |
 |---|---|---|
 | `/api/health` | GET | Health check — returns `{ ok, cwd, shell }` |
-| `/api/execute` | POST `{ command, cwd? }` | Run a shell command; SSE stream of `stdout`/`stderr`/`done` events |
-| `/api/file` | GET `?path=` | Read a file from the project directory |
-| `/api/file` | POST `{ path, content }` | Write a file (creates directories as needed) |
-| `/api/ls` | GET `?path=` | List a directory |
+| `/api/execute` | POST `{ command, cwd? }` | Run command; SSE `stdout`/`stderr`/`done`; disconnect kills process tree |
+| `/api/file` | GET `?path=` | Read a file |
+| `/api/file` | POST `{ path, content }` | Write a file (mkdir -p included) |
+| `/api/ls` | GET `?path=&recursive=true&depth=N` | List directory (flat or recursive tree) |
+| `/api/watch` | GET `?path=` | SSE stream — emits `changed` event on file modification |
 | `/api/settings` | GET / POST | Read/write `~/.githubActionsCAP-settings.json` |
 | `/api/progress` | GET / POST | Read/write `~/.githubActionsCAP-progress.json` |
-| `/api/llm/chat` | POST `{ messages, systemPrompt }` | Proxy streaming chat to configured LLM |
+| `/api/llm/chat` | POST `{ messages, systemPrompt, projectDir? }` | Streaming chat with `write_file` tool support |
 | `/api/llm/models` | GET | Fetch model list from configured provider |
+| `/api/github/runs` | GET `?owner=&repo=` | List recent workflow runs |
+| `/api/github/run/:id/jobs` | GET `?owner=&repo=` | List jobs and steps for a run |
+| `/api/github/test` | GET `?owner=&repo=` | Test GitHub token and return repo info |
+| `/api/github/watch` | GET `?owner=&repo=` | SSE — emits `update` when run status changes (polls every 20s) |
+
+---
+
+## File Explorer
+
+The **FILES** panel in the sidebar shows a live tree of your project files.
+
+- **Expand/collapse** directories by clicking them
+- **Click any file** → opens it in a full Monaco editor overlay (with Save and close)
+- **↺ Refresh** button reloads the tree (also auto-refreshes when AI tutor writes files)
+- Automatically excludes: `node_modules/`, `gen/`, `mta_archives/`, `.git/`, `app/` (the learning app itself)
 
 ---
 
 ## Adding a New Lesson Module
 
-1. Create `app/frontend/src/lessons/04-your-topic.ts`
-2. Export a `Module` object (same shape as existing modules):
+1. Create `app/frontend/src/lessons/07-your-topic.ts`
+2. Export a `Module` object:
 ```typescript
 import type { Module } from '../types'
 export const myModule: Module = {
-  id: '04-your-topic',
+  id: '07-your-topic',
   title: 'Your Topic',
   icon: '🔧',
   description: '...',
-  steps: [
-    {
-      id: '04-step-1',
-      title: 'First Step',
-      contextHints: ['keyword1', 'keyword2'],
-      blocks: [
-        { kind: 'markdown', content: `## Explanation...` },
-        { kind: 'run', label: 'Run something', command: 'echo hello' },
-        { kind: 'editor', path: 'myfile.yml', defaultContent: '# starter content' },
-      ],
-    },
-  ],
+  steps: [{
+    id: '07-step-1',
+    title: 'First Step',
+    contextHints: ['keyword1', 'keyword2'],
+    blocks: [
+      { kind: 'markdown', content: `## Explanation...` },
+      { kind: 'run', label: 'Run something', command: 'echo hello' },
+      { kind: 'editor', path: 'myfile.yml', defaultContent: '# starter content' },
+      { kind: 'dirpicker', label: 'Choose project folder' },
+    ],
+  }],
 }
 ```
-3. Register it in `app/frontend/src/lessons/index.ts`:
+3. Register in `app/frontend/src/lessons/index.ts`:
 ```typescript
-import { myModule } from './04-your-topic'
+import { myModule } from './07-your-topic'
 export const MODULE_LIST = [...existing, myModule]
 ```
+
+### Block types
+
+| Kind | Purpose |
+|---|---|
+| `markdown` | Explanatory text with full markdown + code highlighting |
+| `code` | Syntax-highlighted read-only code snippet |
+| `run` | Click-to-run command with ✏ edit, streaming output, ■ stop |
+| `editor` | Monaco editor for a specific file (read/write/watch) |
+| `dirpicker` | Project folder selector (sets `cwd` for all run/editor blocks with `useProjectDir: true`) |
 
 ---
 
 ## Windows Notes
 
-Command execution uses **Git for Windows bash** (`C:\Program Files\Git\bin\bash.exe`), resolved automatically at backend startup. All lesson commands are written as bash commands — `npm`, `cds`, `cf`, `mbt`, and `git` must be on your Windows PATH.
+Command execution uses **Git for Windows bash** (`C:\Program Files\Git\bin\bash.exe`), resolved automatically at backend startup. All lesson commands are bash — `npm`, `cds`, `cf`, `mbt`, and `git` must be on your Windows PATH.
 
-Settings and progress are stored in your home directory (`%USERPROFILE%`) and survive project directory resets:
-- `~/.githubActionsCAP-settings.json` — LLM proxy config
+Settings and progress live in your home directory and survive project resets:
+- `~/.githubActionsCAP-settings.json` — LLM proxy + GitHub config
 - `~/.githubActionsCAP-progress.json` — completed lesson steps
+
+Terminal layout (position + size) is saved to `localStorage`.
 
 ---
 
