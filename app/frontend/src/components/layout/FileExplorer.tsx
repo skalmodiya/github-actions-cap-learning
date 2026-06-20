@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { DirEntry } from '../../lib/api'
 import * as api from '../../lib/api'
+import { useAppState } from '../../context/AppStateContext'
 import './FileExplorer.css'
 
 interface FileExplorerProps {
   onOpenFile: (path: string) => void
   activeFilePath: string | null
   refreshKey?: number
-  // When true, the file tree fills all available sidebar space
   fillHeight?: boolean
 }
 
@@ -31,7 +31,7 @@ interface TreeNodeProps {
 }
 
 function TreeNode({ node, depth, activeFilePath, onOpenFile }: TreeNodeProps) {
-  const [expanded, setExpanded] = useState(depth === 0)
+  const [expanded, setExpanded] = useState(depth <= 1)
 
   const isActive = node.type === 'file' && node.path === activeFilePath
 
@@ -74,25 +74,37 @@ function TreeNode({ node, depth, activeFilePath, onOpenFile }: TreeNodeProps) {
 }
 
 export default function FileExplorer({ onOpenFile, activeFilePath, refreshKey, fillHeight }: FileExplorerProps) {
+  const { activeProjectDir } = useAppState()
   const [tree, setTree] = useState<DirEntry[]>([])
   const [loading, setLoading] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
 
+  // Use project dir as root when set, otherwise fall back to workspace root
+  const rootPath = activeProjectDir || ''
+
   const reload = useCallback(() => {
     setLoading(true)
-    api.listDirTree('')
+    api.listDirTree(rootPath)
       .then(items => setTree(items))
       .catch(() => setTree([]))
       .finally(() => setLoading(false))
-  }, [])
+  }, [rootPath])
 
+  // Reload when root changes (project dir set/changed) or refresh triggered
   useEffect(() => { reload() }, [reload, refreshKey])
+
+  const rootLabel = activeProjectDir ? activeProjectDir + '/' : 'workspace'
 
   return (
     <div className={`file-explorer ${collapsed ? 'collapsed' : ''} ${fillHeight ? 'fill-height' : ''}`}>
       <div className="fe-header" onClick={() => setCollapsed(c => !c)}>
         <span className="fe-header-icon">🗂</span>
-        <span className="fe-header-title">Files</span>
+        <span className="fe-header-title">
+          Files
+          {activeProjectDir && (
+            <span className="fe-root-badge">📁 {activeProjectDir}</span>
+          )}
+        </span>
         <div className="fe-header-actions" onClick={e => e.stopPropagation()}>
           <button className="fe-refresh-btn" onClick={reload} title="Refresh" disabled={loading}>
             {loading ? '⟳' : '↺'}
@@ -106,7 +118,11 @@ export default function FileExplorer({ onOpenFile, activeFilePath, refreshKey, f
           {loading && tree.length === 0 ? (
             <div className="fe-empty">Loading…</div>
           ) : tree.length === 0 ? (
-            <div className="fe-empty">No project files yet.<br />Complete a lesson step to create files.</div>
+            <div className="fe-empty">
+              {activeProjectDir
+                ? `No files in ${activeProjectDir}/ yet.\nRun the lesson steps to create files.`
+                : 'Set a project folder in the lesson\n(Step 3 of CAP Project Setup).'}
+            </div>
           ) : (
             tree.map(node => (
               <TreeNode
