@@ -1,99 +1,121 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { TerminalLine } from '../../types'
+import type { TerminalLayout } from '../../App'
 import { useAppState } from '../../context/AppStateContext'
 import { useSSE } from '../../hooks/useSSE'
 import './TerminalPanel.css'
 
-export default function TerminalPanel() {
-  const { activeProjectDir } = useAppState()
+interface TerminalPanelProps {
+  layout: TerminalLayout
+  onLayoutChange: (patch: Partial<TerminalLayout>) => void
+}
 
-  // All output lines — appended from both lesson RunBlocks and ad-hoc input
+const MIN_SIZE = 120
+const MAX_BOTTOM = 700
+const MAX_RIGHT = 900
+
+export default function TerminalPanel({ layout, onLayoutChange }: TerminalPanelProps) {
+  const { activeProjectDir } = useAppState()
+  const { position, size } = layout
+
   const [allLines, setAllLines] = useState<TerminalLine[]>([])
   const [running, setRunning] = useState(false)
   const [exitCode, setExitCode] = useState<number | null>(null)
   const [elapsed, setElapsed] = useState<number | null>(null)
   const [collapsed, setCollapsed] = useState(false)
 
-  // Ad-hoc input state
   const [input, setInput] = useState('')
   const [history, setHistory] = useState<string[]>([])
   const [historyIdx, setHistoryIdx] = useState(-1)
-
-  // Custom cwd for ad-hoc commands — defaults to active project dir
   const [cwdOverride, setCwdOverride] = useState('')
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const dragRef = useRef<{ startPos: number; startSize: number } | null>(null)
 
   const { lines: sseLines, running: sseRunning, exitCode: sseExitCode,
           elapsed: sseElapsed, run, clear: clearSSE } = useSSE()
 
-  // Keep cwd in sync with active project dir (but user can override)
   useEffect(() => {
     setCwdOverride(activeProjectDir || '')
   }, [activeProjectDir])
 
-  // Listen for terminal events from lesson RunBlocks — append, don't replace
+  // Receive output from lesson RunBlocks
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail
       if (detail.running) {
-        setRunning(true)
-        setExitCode(null)
-        setElapsed(null)
-        setCollapsed(false)
+        setRunning(true); setExitCode(null); setElapsed(null); setCollapsed(false)
       }
-      if (detail.lines?.length > 0) {
-        setAllLines(detail.lines)
-      }
+      if (detail.lines?.length > 0) setAllLines(detail.lines)
       if (!detail.running && detail.exitCode !== null) {
-        setRunning(false)
-        setExitCode(detail.exitCode)
-        setElapsed(detail.elapsed)
+        setRunning(false); setExitCode(detail.exitCode); setElapsed(detail.elapsed)
       }
     }
     window.addEventListener('terminal-update', handler)
     return () => window.removeEventListener('terminal-update', handler)
   }, [])
 
-  // Append SSE output from ad-hoc runs to allLines
+  // Sync SSE output from ad-hoc runs
   useEffect(() => {
     if (sseLines.length > 0) {
       setAllLines(sseLines)
       setRunning(sseRunning)
       if (!sseRunning && sseExitCode !== null) {
-        setExitCode(sseExitCode)
-        setElapsed(sseElapsed)
+        setExitCode(sseExitCode); setElapsed(sseElapsed)
       }
     }
   }, [sseLines, sseRunning, sseExitCode, sseElapsed])
 
-  // Auto-scroll
   useEffect(() => {
     if (scrollRef.current && !collapsed) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [allLines, collapsed])
 
+  // ── Drag-to-resize ──────────────────────────────────────────
+  const onDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    dragRef.current = {
+      startPos: position === 'bottom' ? e.clientY : e.clientX,
+      startSize: size,
+    }
+
+    const onMove = (me: MouseEvent) => {
+      if (!dragRef.current) return
+      const delta = position === 'bottom'
+        ? dragRef.current.startPos - me.clientY   // drag up → bigger
+        : dragRef.current.startPos - me.clientX   // drag left → bigger
+      const max = position === 'bottom' ? MAX_BOTTOM : MAX_RIGHT
+      const next = Math.max(MIN_SIZE, Math.min(max, dragRef.current.startSize + delta))
+      onLayoutChange({ size: Math.round(next) })
+    }
+
+    const onUp = () => {
+      dragRef.current = null
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }, [position, size, onLayoutChange])
+
+  // ── Ad-hoc command ──────────────────────────────────────────
   const handleRun = useCallback(async () => {
     const cmd = input.trim()
     if (!cmd || running || sseRunning) return
-
     setHistory(h => [cmd, ...h.filter(x => x !== cmd)].slice(0, 50))
     setHistoryIdx(-1)
     setInput('')
     setCollapsed(false)
     clearSSE()
-
-    const cwd = cwdOverride || undefined
-    await run(cmd, cwd)
+    await run(cmd, cwdOverride || undefined)
   }, [input, running, sseRunning, cwdOverride, run, clearSSE])
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      handleRun()
-    } else if (e.key === 'ArrowUp') {
+    if (e.key === 'Enter') { e.preventDefault(); handleRun() }
+    else if (e.key === 'ArrowUp') {
       e.preventDefault()
       const idx = Math.min(historyIdx + 1, history.length - 1)
       setHistoryIdx(idx)
@@ -105,19 +127,40 @@ export default function TerminalPanel() {
       setInput(idx === -1 ? '' : (history[idx] ?? ''))
     } else if (e.key === 'l' && e.ctrlKey) {
       e.preventDefault()
-      setAllLines([])
-      setExitCode(null)
-      setElapsed(null)
+      setAllLines([]); setExitCode(null); setElapsed(null)
     }
   }
 
   const isAnyRunning = running || sseRunning
 
+  // Inline size style: height when bottom, width when right
+  const sizeStyle: React.CSSProperties = collapsed
+    ? {}
+    : position === 'bottom'
+      ? { height: size }
+      : { width: size }
+
   return (
-    <div className={`terminal-panel ${collapsed ? 'collapsed' : ''}`}>
-      {/* Toolbar — click to collapse/expand */}
-      <div className="terminal-toolbar" onClick={() => setCollapsed(c => !c)}>
-        <div className="terminal-title">
+    <div
+      className={`terminal-panel terminal-panel--${position} ${collapsed ? 'collapsed' : ''}`}
+      style={sizeStyle}
+    >
+      {/* ── Drag handle ── */}
+      {!collapsed && (
+        <div
+          className={`terminal-resize-handle terminal-resize-handle--${position}`}
+          onMouseDown={onDragStart}
+          title="Drag to resize"
+        />
+      )}
+
+      {/* ── Toolbar ── */}
+      <div className="terminal-toolbar">
+        <div
+          className="terminal-title"
+          onClick={() => setCollapsed(c => !c)}
+          style={{ cursor: 'pointer', flex: 1 }}
+        >
           <span className="terminal-icon">⬛</span>
           <span>Terminal</span>
           {isAnyRunning && <span className="terminal-running-badge">running</span>}
@@ -130,29 +173,61 @@ export default function TerminalPanel() {
             <span className="terminal-elapsed">{(elapsed / 1000).toFixed(1)}s</span>
           )}
         </div>
+
         <div className="terminal-controls">
+          {/* Position toggle */}
+          <div className="terminal-pos-btns">
+            <button
+              className={`terminal-pos-btn ${position === 'bottom' ? 'active' : ''}`}
+              onClick={() => { onLayoutChange({ position: 'bottom', size: 300 }); setCollapsed(false) }}
+              title="Move terminal to bottom"
+            >
+              ⬇
+            </button>
+            <button
+              className={`terminal-pos-btn ${position === 'right' ? 'active' : ''}`}
+              onClick={() => { onLayoutChange({ position: 'right', size: 420 }); setCollapsed(false) }}
+              title="Move terminal to right panel"
+            >
+              ➡
+            </button>
+          </div>
+
+          {/* Size reset */}
+          <button
+            className="terminal-clear-btn"
+            onClick={() => onLayoutChange({ size: position === 'bottom' ? 300 : 420 })}
+            title="Reset size"
+          >
+            ⤢
+          </button>
+
           {allLines.length > 0 && (
             <button
-              onClick={e => {
-                e.stopPropagation()
-                setAllLines([])
-                setExitCode(null)
-                setElapsed(null)
-                clearSSE()
-              }}
-              title="Clear (Ctrl+L)"
               className="terminal-clear-btn"
+              onClick={() => { setAllLines([]); setExitCode(null); setElapsed(null); clearSSE() }}
+              title="Clear (Ctrl+L)"
             >
               Clear
             </button>
           )}
-          <span className="terminal-toggle">{collapsed ? '▲' : '▼'}</span>
+
+          <span
+            className="terminal-toggle"
+            onClick={() => setCollapsed(c => !c)}
+            style={{ cursor: 'pointer' }}
+          >
+            {collapsed
+              ? (position === 'bottom' ? '▲' : '◀')
+              : (position === 'bottom' ? '▼' : '▶')
+            }
+          </span>
         </div>
       </div>
 
       {!collapsed && (
         <>
-          {/* Output area */}
+          {/* ── Output area ── */}
           <div
             className="terminal-body"
             ref={scrollRef}
@@ -172,7 +247,7 @@ export default function TerminalPanel() {
             {isAnyRunning && <span className="terminal-cursor">▋</span>}
           </div>
 
-          {/* Ad-hoc command input bar */}
+          {/* ── Ad-hoc input bar ── */}
           <div className="terminal-input-bar">
             <div className="terminal-prompt-area">
               <span className="terminal-prompt-sym">$</span>
@@ -187,7 +262,6 @@ export default function TerminalPanel() {
                 disabled={isAnyRunning}
                 spellCheck={false}
                 autoComplete="off"
-                autoCorrect="off"
               />
               <button
                 className="terminal-run-btn"
@@ -212,7 +286,7 @@ export default function TerminalPanel() {
                 <button
                   className="terminal-cwd-reset"
                   onClick={() => setCwdOverride(activeProjectDir)}
-                  title={`Reset to active project: ${activeProjectDir}/`}
+                  title={`Reset to ${activeProjectDir}/`}
                 >
                   ↩ {activeProjectDir}/
                 </button>
