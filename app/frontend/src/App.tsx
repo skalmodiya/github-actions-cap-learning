@@ -19,8 +19,8 @@ export interface TerminalLayout {
   size: number
 }
 
-const STORAGE_KEY = 'cap-terminal-layout'
-const DEFAULTS: TerminalLayout = { position: 'bottom', size: 300 }
+const STORAGE_KEY = 'cap-terminal-layout-v2'  // v2 resets old cached sizes
+const DEFAULTS: TerminalLayout = { position: 'bottom', size: 220 }
 
 function loadLayout(): TerminalLayout {
   try {
@@ -78,15 +78,17 @@ export default function App() {
                   explorerRefresh={explorerRefresh}
                 />
                 <div className={`main-content main-content--${layout.position}`}>
-                  <StepTabBar />
-                  {explorerFile ? (
-                    <FileEditorOverlay
-                      path={explorerFile}
-                      onClose={() => setExplorerFile(null)}
-                    />
-                  ) : (
-                    <LessonShell />
-                  )}
+                  <div className="lesson-area">
+                    <StepTabBar />
+                    {explorerFile ? (
+                      <FileEditorOverlay
+                        path={explorerFile}
+                        onClose={() => setExplorerFile(null)}
+                      />
+                    ) : (
+                      <LessonShell />
+                    )}
+                  </div>
                   <TerminalPanel layout={layout} onLayoutChange={updateLayout} />
                 </div>
               </>

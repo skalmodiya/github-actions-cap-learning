@@ -7,8 +7,17 @@
   flex-shrink: 0;
   padding: 0 8px;
   gap: 2px;
+  /* Fade-out hint at right edge when content overflows */
+  -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+  mask-image: linear-gradient(to right, black 85%, transparent 100%);
 }
 .step-tab-bar::-webkit-scrollbar { display: none; }
+
+/* Remove mask when not overflowing */
+.step-tab-bar:not(.overflow) {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
 
 .step-tab {
   display: flex;

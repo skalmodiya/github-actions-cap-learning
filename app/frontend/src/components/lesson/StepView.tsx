@@ -18,13 +18,6 @@ export default function StepView() {
     <div className="step-view">
       <h2 className="step-title">{activeStep.title}</h2>
 
-      {activeStep.completionCriteria && (
-        <div className="step-criteria">
-          <span className="step-criteria-icon">🎯</span>
-          <span>{activeStep.completionCriteria}</span>
-        </div>
-      )}
-
       <div className="step-blocks">
         {activeStep.blocks.map((block, idx) => {
           if (block.kind === 'markdown') {
