@@ -4,6 +4,7 @@ import { SettingsProvider } from './context/SettingsContext'
 import Header from './components/layout/Header'
 import Sidebar from './components/layout/Sidebar'
 import ModuleTabBar from './components/layout/ModuleTabBar'
+import StepTabBar from './components/layout/StepTabBar'
 import LessonShell from './components/lesson/LessonShell'
 import TerminalPanel from './components/terminal/TerminalPanel'
 import FileEditorOverlay from './components/layout/FileEditorOverlay'
@@ -77,7 +78,7 @@ export default function App() {
                   explorerRefresh={explorerRefresh}
                 />
                 <div className={`main-content main-content--${layout.position}`}>
-                  <ModuleTabBar />
+                  <StepTabBar />
                   {explorerFile ? (
                     <FileEditorOverlay
                       path={explorerFile}
