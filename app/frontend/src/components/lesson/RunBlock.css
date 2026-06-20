@@ -133,7 +133,101 @@
   to { transform: rotate(360deg); }
 }
 
-.run-cwd-badge {
+/* Modified command indicator */
+.run-command--modified {
+  color: var(--warning);
+}
+
+.run-command--editing {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* Edit button */
+.run-edit-btn {
+  font-size: 13px;
+  padding: 3px 7px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+  line-height: 1;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+
+.run-edit-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(88, 166, 255, 0.06);
+}
+
+.run-edit-btn.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(88, 166, 255, 0.1);
+}
+
+/* Inline editor panel */
+.run-editor {
+  border-top: 1px solid var(--border);
+  background: rgba(88, 166, 255, 0.03);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.run-editor-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.run-editor-reset {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-muted);
+}
+
+.run-editor-reset:hover {
+  color: var(--warning);
+  border-color: var(--warning);
+  background: transparent;
+}
+
+.run-editor-textarea {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  background: var(--terminal-bg);
+  color: var(--terminal-stdout);
+  border: 1px solid rgba(88, 166, 255, 0.3);
+  border-radius: 5px;
+  padding: 8px 12px;
+  resize: vertical;
+  outline: none;
+  width: 100%;
+  min-height: 48px;
+}
+
+.run-editor-textarea:focus {
+  border-color: var(--accent);
+}
+
+.run-editor-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+
   font-size: 11px;
   color: var(--accent);
   font-family: var(--font-mono);

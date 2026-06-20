@@ -5,7 +5,6 @@ import './RunBlock.css'
 
 interface RunBlockProps {
   block: Extract<StepBlock, { kind: 'run' }>
-  // Set by StepView when block.useProjectDir is true
   projectDir?: string
 }
 
@@ -18,21 +17,29 @@ function dispatchTerminalEvent(lines: import('../../types').TerminalLine[], runn
 export default function RunBlock({ block, projectDir }: RunBlockProps) {
   const { lines, running, exitCode, elapsed, run, stop, clear } = useSSE()
   const [ran, setRan] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [editedCommand, setEditedCommand] = useState(block.command)
 
-  // Resolve cwd: explicit block.cwd wins, then projectDir, then backend default (WORK_DIR)
+  // Reset edited command when block changes (step navigation)
+  useEffect(() => {
+    setEditedCommand(block.command)
+    setEditing(false)
+  }, [block.command])
+
   const resolvedCwd = block.cwd ?? projectDir ?? undefined
+  const commandToRun = editedCommand.trim() || block.command
+  const isModified = editedCommand.trim() !== block.command
 
   useEffect(() => {
-    if (ran) {
-      dispatchTerminalEvent(lines, running, exitCode, elapsed)
-    }
+    if (ran) dispatchTerminalEvent(lines, running, exitCode, elapsed)
   }, [lines, running, exitCode, elapsed, ran])
 
   const handleRun = async () => {
     setRan(true)
+    setEditing(false)
     clear()
     dispatchTerminalEvent([], true, null, null)
-    await run(block.command, resolvedCwd)
+    await run(commandToRun, resolvedCwd)
   }
 
   const lastLines = lines.slice(-8)
@@ -43,7 +50,13 @@ export default function RunBlock({ block, projectDir }: RunBlockProps) {
       <div className="run-block-header">
         <div className="run-command-wrap">
           <span className="run-prompt">$</span>
-          <code className="run-command">{block.command}</code>
+          {editing ? (
+            <span className="run-command run-command--editing">editing…</span>
+          ) : (
+            <code className={`run-command ${isModified ? 'run-command--modified' : ''}`}>
+              {editedCommand}
+            </code>
+          )}
         </div>
         <div className="run-actions">
           {projectDir && (
@@ -59,6 +72,16 @@ export default function RunBlock({ block, projectDir }: RunBlockProps) {
               exit {exitCode}
             </span>
           )}
+          {/* Edit toggle — only when not running */}
+          {!running && (
+            <button
+              className={`run-edit-btn ${editing ? 'active' : ''}`}
+              onClick={() => setEditing(e => !e)}
+              title={editing ? 'Close editor' : 'Edit command before running'}
+            >
+              ✏
+            </button>
+          )}
           <button
             className="run-btn"
             onClick={handleRun}
@@ -71,16 +94,47 @@ export default function RunBlock({ block, projectDir }: RunBlockProps) {
             }
           </button>
           {running && (
-            <button
-              className="run-stop-btn"
-              onClick={stop}
-              title="Stop process (Ctrl+C)"
-            >
+            <button className="run-stop-btn" onClick={stop} title="Stop process (Ctrl+C)">
               ■ Stop
             </button>
           )}
         </div>
       </div>
+
+      {/* Inline command editor */}
+      {editing && !running && (
+        <div className="run-editor">
+          <div className="run-editor-label">
+            <span>✏ Edit command</span>
+            {isModified && (
+              <button
+                className="run-editor-reset"
+                onClick={() => setEditedCommand(block.command)}
+                title="Reset to original"
+              >
+                ↩ Reset
+              </button>
+            )}
+          </div>
+          <textarea
+            className="run-editor-textarea"
+            value={editedCommand}
+            onChange={e => setEditedCommand(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault()
+                handleRun()
+              }
+            }}
+            rows={Math.max(2, editedCommand.split('\n').length)}
+            spellCheck={false}
+            autoFocus
+          />
+          <div className="run-editor-hint">
+            Change any values above (URLs, flags, names) then click ▶ to run. Ctrl+Enter to run immediately.
+          </div>
+        </div>
+      )}
 
       {block.useProjectDir && !projectDir && (
         <div className="run-needs-dir">
