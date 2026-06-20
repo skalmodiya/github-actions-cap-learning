@@ -77,19 +77,23 @@ export default function App() {
                   activeExplorerFile={explorerFile}
                   explorerRefresh={explorerRefresh}
                 />
-                <div className={`main-content main-content--${layout.position}`}>
-                  <div className="lesson-area">
-                    <StepTabBar />
-                    {explorerFile ? (
-                      <FileEditorOverlay
-                        path={explorerFile}
-                        onClose={() => setExplorerFile(null)}
-                      />
-                    ) : (
-                      <LessonShell />
-                    )}
+                <div className="main-content">
+                  {/* Step tabs always span full width — above the terminal split */}
+                  <StepTabBar />
+                  {/* Content row: lesson area + terminal (bottom or right) */}
+                  <div className={`content-row content-row--${layout.position}`}>
+                    <div className="lesson-area">
+                      {explorerFile ? (
+                        <FileEditorOverlay
+                          path={explorerFile}
+                          onClose={() => setExplorerFile(null)}
+                        />
+                      ) : (
+                        <LessonShell />
+                      )}
+                    </div>
+                    <TerminalPanel layout={layout} onLayoutChange={updateLayout} />
                   </div>
-                  <TerminalPanel layout={layout} onLayoutChange={updateLayout} />
                 </div>
               </>
             )}

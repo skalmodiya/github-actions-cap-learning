@@ -11,25 +11,33 @@
   overflow: hidden;
 }
 
-/* Bottom position: lesson above, terminal below */
-.main-content--bottom {
+/* main-content: always a flex column — tab bar on top, content-row below */
+.main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  position: relative;
+  min-width: 0;
 }
 
-/* Right position: lesson left, terminal right */
-.main-content--right {
+/* content-row holds lesson-area + terminal */
+.content-row--bottom {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.content-row--right {
   flex: 1;
   display: flex;
   flex-direction: row;
   overflow: hidden;
-  position: relative;
+  min-height: 0;
 }
 
-/* lesson-area wraps tab bar + lesson/editor — stacks vertically in both layout modes */
+/* lesson-area fills remaining space in both modes */
 .lesson-area {
   flex: 1;
   display: flex;
@@ -38,6 +46,8 @@
   min-width: 0;
   min-height: 0;
 }
+
+.app-loading {
   flex: 1;
   display: flex;
   align-items: center;
