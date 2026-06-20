@@ -84,7 +84,59 @@
   text-overflow: ellipsis;
 }
 
-.editor-wrap {
+.editor-conflict-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  background: rgba(210, 153, 34, 0.12);
+  border-bottom: 1px solid rgba(210, 153, 34, 0.35);
+  font-size: 12px;
+  color: var(--warning);
+  flex-wrap: wrap;
+}
+
+.editor-conflict-icon {
+  flex-shrink: 0;
+}
+
+.editor-conflict-bar span {
+  flex: 1;
+  min-width: 180px;
+}
+
+.editor-conflict-accept {
+  font-size: 11px;
+  padding: 3px 10px;
+  background: rgba(63, 185, 80, 0.15);
+  border: 1px solid rgba(63, 185, 80, 0.4);
+  color: var(--success);
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.editor-conflict-accept:hover {
+  background: rgba(63, 185, 80, 0.25);
+  border-color: var(--success);
+}
+
+.editor-conflict-dismiss {
+  font-size: 11px;
+  padding: 3px 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.editor-conflict-dismiss:hover {
+  border-color: var(--text-muted);
+  color: var(--text);
+  background: transparent;
+}
+
+
   position: relative;
 }
 

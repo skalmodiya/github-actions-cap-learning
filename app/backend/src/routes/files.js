@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { readFile, writeFile, mkdir, readdir } from 'fs/promises'
+import { watch } from 'fs'
 import { resolve, extname, dirname } from 'path'
 import { WORK_DIR } from '../lib/paths.js'
 
@@ -44,7 +45,51 @@ filesRouter.post('/file', async (req, res) => {
   }
 })
 
-// GET /api/ls?path=...
+// GET /api/watch?path=...
+// SSE stream — sends a 'changed' event whenever the file is modified externally.
+// The client reconnects automatically via EventSource.
+filesRouter.get('/watch', (req, res) => {
+  let fullPath
+  try {
+    fullPath = safePath(req.query.path)
+  } catch (err) {
+    return res.status(400).json({ error: err.message })
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+  res.flushHeaders()
+
+  const send = (event, data) =>
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+
+  // Debounce — fs.watch fires twice on Windows (rename + change)
+  let debounce = null
+  let watcher = null
+
+  try {
+    watcher = watch(fullPath, { persistent: false }, (eventType) => {
+      if (eventType !== 'change' && eventType !== 'rename') return
+      clearTimeout(debounce)
+      debounce = setTimeout(() => send('changed', { path: req.query.path }), 80)
+    })
+  } catch {
+    // File may not exist yet — send a 'ready' ping and close
+    send('ready', {})
+    res.end()
+    return
+  }
+
+  // Keepalive ping every 15s to prevent proxy/browser timeout
+  const ping = setInterval(() => res.write(': ping\n\n'), 15000)
+
+  res.on('close', () => {
+    clearInterval(ping)
+    clearTimeout(debounce)
+    watcher?.close()
+  })
+})
 filesRouter.get('/ls', async (req, res) => {
   try {
     const fullPath = safePath(req.query.path || '')

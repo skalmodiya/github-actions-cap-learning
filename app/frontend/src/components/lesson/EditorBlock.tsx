@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import MonacoEditor from '@monaco-editor/react'
 import type { StepBlock } from '../../types'
 import { useAppState } from '../../context/AppStateContext'
@@ -7,7 +7,6 @@ import './EditorBlock.css'
 
 interface EditorBlockProps {
   block: Extract<StepBlock, { kind: 'editor' }>
-  // Set by StepView when block.useProjectDir is true
   projectDir?: string
 }
 
@@ -37,14 +36,19 @@ export default function EditorBlock({ block, projectDir }: EditorBlockProps) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saveMsg, setSaveMsg] = useState<string | null>(null)
+  const [externalReload, setExternalReload] = useState(false)
 
-  // If useProjectDir, prepend projectDir/ to the path
+  // Track whether user has unsaved edits — used to decide if external changes should auto-reload
+  const userEditedRef = useRef(false)
+
   const resolvedPath = projectDir ? `${projectDir}/${block.path}` : block.path
   const language = block.language || langFromPath(block.path)
 
+  // ── Initial load ────────────────────────────────────────────
   useEffect(() => {
     setLoading(true)
     setError(null)
+    userEditedRef.current = false
     api.readFile(resolvedPath)
       .then(r => {
         setContent(r.content)
@@ -53,7 +57,6 @@ export default function EditorBlock({ block, projectDir }: EditorBlockProps) {
         dispatch({ type: 'SET_OPEN_FILE', path: resolvedPath, content: r.content })
       })
       .catch(() => {
-        // File doesn't exist yet — load default content; treat as unsaved
         const initial = block.defaultContent ?? ''
         setContent(initial)
         setSavedContent(initial)
@@ -67,9 +70,32 @@ export default function EditorBlock({ block, projectDir }: EditorBlockProps) {
     }
   }, [resolvedPath, block.defaultContent])
 
-  // Dirty when content differs from disk, OR when file hasn't been saved yet
+  // ── File watcher via SSE ────────────────────────────────────
+  useEffect(() => {
+    if (!fileExists) return // don't watch files that don't exist yet
+
+    const es = new EventSource(`/api/watch?path=${encodeURIComponent(resolvedPath)}`)
+
+    es.addEventListener('changed', () => {
+      if (userEditedRef.current) {
+        // User has local unsaved edits — flag the conflict, don't overwrite
+        setExternalReload(true)
+      } else {
+        // No local edits — silently reload from disk
+        api.readFile(resolvedPath).then(r => {
+          setContent(r.content)
+          setSavedContent(r.content)
+          dispatch({ type: 'SET_OPEN_FILE', path: resolvedPath, content: r.content })
+        }).catch(() => {})
+      }
+    })
+
+    return () => es.close()
+  }, [resolvedPath, fileExists])
+
   const isDirty = !fileExists || content !== savedContent
 
+  // ── Save ────────────────────────────────────────────────────
   async function handleSave() {
     setSaving(true)
     setSaveMsg(null)
@@ -77,6 +103,8 @@ export default function EditorBlock({ block, projectDir }: EditorBlockProps) {
       await api.writeFile(resolvedPath, content)
       setSavedContent(content)
       setFileExists(true)
+      setExternalReload(false)
+      userEditedRef.current = false
       setSaveMsg('Saved!')
       dispatch({ type: 'SET_OPEN_FILE', path: resolvedPath, content })
       setTimeout(() => setSaveMsg(null), 2000)
@@ -87,6 +115,17 @@ export default function EditorBlock({ block, projectDir }: EditorBlockProps) {
     }
   }
 
+  // Accept external changes and discard local edits
+  function handleAcceptExternal() {
+    api.readFile(resolvedPath).then(r => {
+      setContent(r.content)
+      setSavedContent(r.content)
+      setExternalReload(false)
+      userEditedRef.current = false
+      dispatch({ type: 'SET_OPEN_FILE', path: resolvedPath, content: r.content })
+    }).catch(() => setExternalReload(false))
+  }
+
   return (
     <div className="editor-block">
       <div className="editor-toolbar">
@@ -94,7 +133,7 @@ export default function EditorBlock({ block, projectDir }: EditorBlockProps) {
           <span className="editor-icon">📄</span>
           <span className="editor-path">{resolvedPath}</span>
           {!fileExists && <span className="editor-new-badge">new</span>}
-          {fileExists && isDirty && <span className="editor-dirty">●</span>}
+          {fileExists && isDirty && !externalReload && <span className="editor-dirty">●</span>}
         </div>
         {block.description && (
           <span className="editor-desc">{block.description}</span>
@@ -106,12 +145,26 @@ export default function EditorBlock({ block, projectDir }: EditorBlockProps) {
             className="primary"
             onClick={handleSave}
             disabled={saving || !isDirty}
-            title="Save file (Ctrl+S equivalent)"
+            title="Save file"
           >
             {saving ? 'Saving…' : '💾 Save'}
           </button>
         </div>
       </div>
+
+      {/* External change conflict banner */}
+      {externalReload && (
+        <div className="editor-conflict-bar">
+          <span className="editor-conflict-icon">⚠</span>
+          <span>File changed externally — your local edits differ from disk.</span>
+          <button onClick={handleAcceptExternal} className="editor-conflict-accept">
+            ↓ Load from disk
+          </button>
+          <button onClick={() => setExternalReload(false)} className="editor-conflict-dismiss">
+            Keep mine
+          </button>
+        </div>
+      )}
 
       <div className="editor-wrap">
         {loading ? (
@@ -123,6 +176,7 @@ export default function EditorBlock({ block, projectDir }: EditorBlockProps) {
             value={content}
             onChange={val => {
               setContent(val ?? '')
+              userEditedRef.current = true
               if (error) setError(null)
             }}
             theme="vs-dark"
