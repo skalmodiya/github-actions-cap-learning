@@ -4,9 +4,10 @@
   flex: 1;
   overflow: hidden;
   background: var(--bg-surface);
-  border-left: 1px solid var(--border);
+  position: relative;
 }
 
+/* Toolbar */
 .file-editor-overlay-toolbar {
   display: flex;
   align-items: center;
@@ -51,12 +52,30 @@
 }
 
 .file-editor-save-msg { font-size: 12px; color: var(--success); }
-.file-editor-error { font-size: 12px; color: var(--error); max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+.file-editor-error {
+  font-size: 12px;
+  color: var(--error);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
+/* Main area: editor + AI panel side by side */
+.file-editor-overlay-main {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  min-height: 0;
+  position: relative;
+}
+
+/* Editor takes remaining space */
 .file-editor-overlay-body {
   flex: 1;
   overflow: hidden;
   background: #1e1e1e;
+  min-width: 0;
 }
 
 .file-editor-overlay-loading {
