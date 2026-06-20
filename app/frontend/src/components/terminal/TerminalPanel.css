@@ -4,7 +4,7 @@
   border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  height: var(--terminal-height);
+  height: 300px;
   transition: height 0.2s ease;
 }
 
@@ -34,9 +34,7 @@
   font-weight: 500;
 }
 
-.terminal-icon {
-  font-size: 11px;
-}
+.terminal-icon { font-size: 11px; }
 
 .terminal-running-badge {
   font-size: 10px;
@@ -50,7 +48,7 @@
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+  50%       { opacity: 0.6; }
 }
 
 .terminal-exit-badge {
@@ -59,13 +57,11 @@
   padding: 1px 7px;
   font-family: var(--font-mono);
 }
-
 .terminal-exit-badge.ok {
   background: rgba(63, 185, 80, 0.15);
   color: var(--success);
   border: 1px solid rgba(63, 185, 80, 0.3);
 }
-
 .terminal-exit-badge.err {
   background: rgba(248, 81, 73, 0.15);
   color: var(--error);
@@ -91,7 +87,6 @@
   border-color: var(--border);
   color: var(--text-muted);
 }
-
 .terminal-clear-btn:hover {
   color: var(--text);
   border-color: var(--text-muted);
@@ -103,13 +98,15 @@
   color: var(--text-dim);
 }
 
+/* ── Output area ─────────────────────────────────────────── */
 .terminal-body {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 14px;
+  padding: 8px 14px 4px;
   font-family: var(--font-mono);
   font-size: 12px;
   line-height: 1.55;
+  cursor: text;
 }
 
 .terminal-empty {
@@ -122,7 +119,6 @@
   white-space: pre-wrap;
   word-break: break-all;
 }
-
 .terminal-line-stdout { color: var(--terminal-stdout); }
 .terminal-line-stderr { color: var(--terminal-stderr); }
 .terminal-line-info   { color: var(--text-muted); }
@@ -133,7 +129,139 @@
   color: var(--text-muted);
   animation: blink 1s step-end infinite;
 }
+@keyframes blink { 50% { opacity: 0; } }
 
-@keyframes blink {
-  50% { opacity: 0; }
+/* ── Ad-hoc input bar ────────────────────────────────────── */
+.terminal-input-bar {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  background: var(--bg-surface);
+}
+
+.terminal-prompt-area {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 4px 0 10px;
+  height: 34px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.terminal-prompt-sym {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--success);
+  font-weight: 700;
+  margin-right: 6px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.terminal-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text);
+  padding: 0;
+  height: 100%;
+}
+
+.terminal-input::placeholder {
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.terminal-input:disabled {
+  opacity: 0.5;
+}
+
+.terminal-run-btn {
+  width: 30px;
+  height: 26px;
+  padding: 0;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.terminal-run-btn:not(:disabled):hover {
+  background: var(--success);
+  color: #0d1117;
+  border-color: var(--success);
+}
+
+.terminal-run-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.run-spinner {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── cwd row ─────────────────────────────────────────────── */
+.terminal-cwd-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 4px;
+}
+
+.terminal-cwd-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.terminal-cwd-input {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 6px;
+  background: var(--bg-elevated);
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: var(--accent);
+  min-width: 0;
+}
+
+.terminal-cwd-input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.terminal-cwd-input::placeholder {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.terminal-cwd-reset {
+  font-size: 10px;
+  padding: 2px 7px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+.terminal-cwd-reset:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(88, 166, 255, 0.06);
 }
