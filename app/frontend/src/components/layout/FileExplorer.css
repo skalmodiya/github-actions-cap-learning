@@ -6,6 +6,13 @@
   flex-shrink: 0;
 }
 
+/* When sidebar is files-only, let explorer grow to fill remaining space */
+.file-explorer.fill-height {
+  flex: 1;
+  max-height: none;
+  min-height: 0;
+}
+
 .file-explorer.collapsed {
   max-height: none;
 }

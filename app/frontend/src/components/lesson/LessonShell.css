@@ -11,34 +11,6 @@
   overflow: hidden;
 }
 
-.lesson-header {
-  padding: 12px 24px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  background: var(--bg-surface);
-}
-
-.lesson-breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.lesson-module-label {
-  color: var(--text-muted);
-}
-
-.lesson-breadcrumb-sep {
-  color: var(--text-dim);
-}
-
-.lesson-step-label {
-  color: var(--text);
-  font-weight: 500;
-}
-
 .lesson-content-scroll {
   flex: 1;
   overflow-y: auto;

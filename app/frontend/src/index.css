@@ -21,7 +21,7 @@
   --terminal-text: #c9d1d9;
   --terminal-stdout: #3fb950;
   --terminal-stderr: #e3b341;
-  --sidebar-width: 260px;
+  --sidebar-width: 300px;
   --header-height: 52px;
   --terminal-height: 240px;
   --font-mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;

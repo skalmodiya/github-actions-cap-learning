@@ -1,4 +1,3 @@
-import { lazy, Suspense, useRef } from 'react'
 import { useAppState } from '../../context/AppStateContext'
 import StepView from './StepView'
 import StepNav from './StepNav'
@@ -12,7 +11,7 @@ export default function LessonShell() {
     return (
       <div className="lesson-empty">
         <div className="lesson-empty-icon">📚</div>
-        <p>Select a module from the sidebar to begin.</p>
+        <p>Select a module tab above to begin.</p>
       </div>
     )
   }
@@ -20,13 +19,6 @@ export default function LessonShell() {
   return (
     <div className="lesson-shell">
       <div className="lesson-main">
-        <div className="lesson-header">
-          <div className="lesson-breadcrumb">
-            <span className="lesson-module-label">{activeModule.icon} {activeModule.title}</span>
-            <span className="lesson-breadcrumb-sep">›</span>
-            <span className="lesson-step-label">{activeStep.title}</span>
-          </div>
-        </div>
         <div className="lesson-content-scroll">
           <StepView />
         </div>

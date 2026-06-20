@@ -6,8 +6,9 @@ import './FileExplorer.css'
 interface FileExplorerProps {
   onOpenFile: (path: string) => void
   activeFilePath: string | null
-  // Refresh signal — increment to force a reload of the tree
   refreshKey?: number
+  // When true, the file tree fills all available sidebar space
+  fillHeight?: boolean
 }
 
 const FILE_ICONS: Record<string, string> = {
@@ -72,7 +73,7 @@ function TreeNode({ node, depth, activeFilePath, onOpenFile }: TreeNodeProps) {
   )
 }
 
-export default function FileExplorer({ onOpenFile, activeFilePath, refreshKey }: FileExplorerProps) {
+export default function FileExplorer({ onOpenFile, activeFilePath, refreshKey, fillHeight }: FileExplorerProps) {
   const [tree, setTree] = useState<DirEntry[]>([])
   const [loading, setLoading] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
@@ -88,7 +89,7 @@ export default function FileExplorer({ onOpenFile, activeFilePath, refreshKey }:
   useEffect(() => { reload() }, [reload, refreshKey])
 
   return (
-    <div className={`file-explorer ${collapsed ? 'collapsed' : ''}`}>
+    <div className={`file-explorer ${collapsed ? 'collapsed' : ''} ${fillHeight ? 'fill-height' : ''}`}>
       <div className="fe-header" onClick={() => setCollapsed(c => !c)}>
         <span className="fe-header-icon">🗂</span>
         <span className="fe-header-title">Files</span>
