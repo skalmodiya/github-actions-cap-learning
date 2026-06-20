@@ -53,6 +53,13 @@
   text-align: left;
 }
 
+.module-chevron {
+  font-size: 10px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  margin-left: 2px;
+}
+
 .module-progress {
   font-size: 11px;
   color: var(--text-dim);
